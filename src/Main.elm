@@ -4,6 +4,8 @@ import Html exposing (Html, text, div, img, input, ul, li, option)
 import Html.Attributes exposing (src, type_, min, max, value, class)
 import Html.Events exposing (onInput)
 import List exposing (map)
+import String exposing (toInt)
+import Result exposing (withDefault)
 import Wods exposing (Wod)
 
 
@@ -16,9 +18,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { wods = Wods.wods }
-    , Cmd.none
-    )
+    ( { wods = Wods.wods }, Cmd.none )
 
 
 
@@ -30,7 +30,7 @@ type Msg
     | Slide String String
 
 
-setWodValue : String -> String -> Wod -> Wod
+setWodValue : String -> Int -> Wod -> Wod
 setWodValue id value wod =
     { wod
         | value =
@@ -45,7 +45,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Slide id v ->
-            ( { model | wods = map (setWodValue id v) model.wods }, Cmd.none )
+            let
+                value =
+                    withDefault 0 (toInt v)
+            in
+                ( { model | wods = map (setWodValue id value) model.wods }
+                , Cmd.none
+                )
 
         none ->
             ( model, Cmd.none )
@@ -64,12 +70,12 @@ renderSliders wods =
                     [ text <| .name w
                     , input
                         [ type_ "range"
-                        , Html.Attributes.min <| toString <| .min w
-                        , Html.Attributes.max <| toString <| .max w
+                        , Html.Attributes.min <| toString <| w.min
+                        , Html.Attributes.max <| toString <| w.max
                         , onInput (Slide <| .id w)
                         ]
                         []
-                    , text <| .value w
+                    , text <| toString w.value
                     ]
             )
         |> ul []
