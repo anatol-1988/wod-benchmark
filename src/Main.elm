@@ -3,13 +3,11 @@ module Main exposing (..)
 import Html exposing (Html, text, div, img, input, ul, li, option)
 import Html.Attributes exposing (src, type_, min, max, value)
 import Html.Events exposing (onInput)
-import Dict exposing (Dict, insert)
-import String exposing (toInt)
-import Result exposing (withDefault)
+import List exposing (map)
 
 
 type alias Wod =
-    { id : String, name : String, min : Int, max : Int }
+    { id : String, name : String, min : Int, max : Int, value : String }
 
 
 
@@ -17,14 +15,12 @@ type alias Wod =
 
 
 type alias Model =
-    { wods : List Wod, values : Dict String Int }
+    { wods : List Wod }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { wods = [ Wod "frn" "Fran" 10 20, Wod "jl" "Julie" 5 15 ]
-      , values = Dict.empty
-      }
+    ( { wods = [ Wod "frn" "Fran" 0 100 "50", Wod "jl" "Julie" 0 100 "50" ] }
     , Cmd.none
     )
 
@@ -38,11 +34,22 @@ type Msg
     | Slide String String
 
 
+setWodValue : String -> String -> Wod -> Wod
+setWodValue id value wod =
+    { wod
+        | value =
+            if wod.id == id then
+                value
+            else
+                wod.value
+    }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Slide id v ->
-            ( { model | values = insert id (withDefault 0 (toInt v)) (model.values) }, Cmd.none )
+            ( { model | wods = map (setWodValue id v) model.wods }, Cmd.none )
 
         none ->
             ( model, Cmd.none )
@@ -66,7 +73,7 @@ renderSliders wods =
                         , onInput (Slide <| .id w)
                         ]
                         []
-                    , text "anatol"
+                    , text <| .value w
                     ]
             )
         |> ul []
