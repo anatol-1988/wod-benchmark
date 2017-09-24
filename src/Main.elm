@@ -84,6 +84,8 @@ view model =
             ]
         , div []
             [ renderSliders model.wods ]
+        , div []
+            [ text <| "Cardio: " ++ (toString <| Wods.getCardio model.wods) ]
         ]
 
 
