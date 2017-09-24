@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Html exposing (Html, text, div, img, input, ul, li, option)
-import Html.Attributes exposing (src, type_, min, max, value)
+import Html.Attributes exposing (src, type_, min, max, value, class)
 import Html.Events exposing (onInput)
 import List exposing (map)
 import Wods exposing (Wod)
@@ -77,15 +77,17 @@ renderSliders wods =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ div []
-            [ img [ src "/logo.svg" ] []
-            , div [] [ text "Your Elm App is working!" ]
-            ]
-        , div []
+    div [ class "row" ]
+        [ div [ class "col s6" ]
             [ renderSliders model.wods ]
-        , div []
-            [ text <| "Cardio: " ++ (toString <| Wods.getCardio model.wods) ]
+        , div [ class "col s6" ]
+            [ div [ class "row" ]
+                [ text <| "Cardio: " ++ (toString <| Wods.getCardio model.wods) ]
+            , div [ class "row" ]
+                [ text <| "Endurance: " ++ (toString <| Wods.getCardio model.wods) ]
+            , div [ class "row" ]
+                [ text <| "Power: " ++ (toString <| Wods.getCardio model.wods) ]
+            ]
         ]
 
 

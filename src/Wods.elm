@@ -21,7 +21,7 @@ wods : List Wod
 wods =
     [ Wod "frn" "Fran" 0 100 "50" 0.3 0.8 0.3
     , Wod "mrh" "Murph" 0 100 "50" 0.9 0.2 0.1
-    , Wod "sq" "Squat" 0 100 "50" 0.1 0.3 0.9
+    , Wod "sq" "Best Squat" 0 100 "50" 0.1 0.3 0.9
     ]
 
 
