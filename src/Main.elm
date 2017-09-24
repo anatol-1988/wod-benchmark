@@ -82,11 +82,17 @@ view model =
             [ renderSliders model.wods ]
         , div [ class "col s6" ]
             [ div [ class "row" ]
-                [ text <| "Cardio: " ++ (toString <| Wods.getCardio model.wods) ]
+                [ text <|
+                    "Cardio: "
+                        ++ (toString <| Wods.getCardio model.wods)
+                ]
             , div [ class "row" ]
-                [ text <| "Endurance: " ++ (toString <| Wods.getCardio model.wods) ]
+                [ text <|
+                    "Endurance: "
+                        ++ (toString <| Wods.getEndurance model.wods)
+                ]
             , div [ class "row" ]
-                [ text <| "Power: " ++ (toString <| Wods.getCardio model.wods) ]
+                [ text <| "Power: " ++ (toString <| Wods.getPower model.wods) ]
             ]
         ]
 
