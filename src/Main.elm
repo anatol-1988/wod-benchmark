@@ -4,11 +4,7 @@ import Html exposing (Html, text, div, img, input, ul, li, option)
 import Html.Attributes exposing (src, type_, min, max, value)
 import Html.Events exposing (onInput)
 import List exposing (map)
-
-
-type alias Wod =
-    { id : String, name : String, min : Int, max : Int, value : String }
-
+import Wods exposing (Wod)
 
 
 ---- MODEL ----
@@ -20,7 +16,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { wods = [ Wod "frn" "Fran" 0 100 "50", Wod "jl" "Julie" 0 100 "50" ] }
+    ( { wods = Wods.wods }
     , Cmd.none
     )
 
