@@ -6,7 +6,9 @@ import Html.Events exposing (onInput)
 import List exposing (map)
 import String exposing (toInt)
 import Result exposing (withDefault)
-import Wods exposing (Wod)
+import Wods exposing (Wod(..))
+import Date.Extra.Create exposing (timeFromFields)
+import Date exposing (toTime)
 
 
 ---- MODEL ----
@@ -30,15 +32,26 @@ type Msg
     | Slide String String
 
 
-setWodValue : String -> Int -> Wod -> Wod
+setWodValue : String -> String -> Wod -> Wod
 setWodValue id value wod =
-    { wod
-        | value =
-            if wod.id == id then
-                value
+    case wod of
+        ForTime props borders val ->
+            if props.id == id then
+                ForTime props borders <| toTime <| timeFromFields 0 0 0 0
             else
-                wod.value
-    }
+                ForTime props borders val
+
+        ForReps props borders val ->
+            if props.id == id then
+                ForReps props borders <| withDefault 0 <| toInt value
+            else
+                ForReps props borders val
+
+        PRInfo props borders val ->
+            if props.id == id then
+                PRInfo props borders <| withDefault 0 <| toInt value
+            else
+                PRInfo props borders val
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -47,7 +60,7 @@ update msg model =
         Slide id v ->
             let
                 value =
-                    withDefault 0 (toInt v)
+                    v
             in
                 ( { model | wods = map (setWodValue id value) model.wods }
                 , Cmd.none
@@ -66,17 +79,45 @@ renderSliders wods =
     wods
         |> List.map
             (\w ->
-                li []
-                    [ text <| .name w
-                    , input
-                        [ type_ "range"
-                        , Html.Attributes.min <| toString <| w.min
-                        , Html.Attributes.max <| toString <| w.max
-                        , onInput (Slide <| .id w)
-                        ]
-                        []
-                    , text <| toString w.value
-                    ]
+                case w of
+                    ForTime props range v ->
+                        li []
+                            [ text <| props.name
+                            , input
+                                [ type_ "range"
+                                , Html.Attributes.min <| toString <| range.worst
+                                , Html.Attributes.max <| toString <| range.best
+                                , onInput (Slide <| props.id)
+                                ]
+                                []
+                            , text <| toString v
+                            ]
+
+                    ForReps props range v ->
+                        li []
+                            [ text <| props.name
+                            , input
+                                [ type_ "range"
+                                , Html.Attributes.min <| toString <| range.worst
+                                , Html.Attributes.max <| toString <| range.best
+                                , onInput (Slide <| props.id)
+                                ]
+                                []
+                            , text <| toString v
+                            ]
+
+                    PRInfo props range v ->
+                        li []
+                            [ text <| props.name
+                            , input
+                                [ type_ "range"
+                                , Html.Attributes.min <| toString <| range.worst
+                                , Html.Attributes.max <| toString <| range.best
+                                , onInput (Slide <| props.id)
+                                ]
+                                []
+                            , text <| toString v
+                            ]
             )
         |> ul []
 

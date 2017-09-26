@@ -1,4 +1,4 @@
-module Wods exposing (Wod, wods, getCardio, getPower, getEndurance)
+module Wods exposing (Wod(..), wods, getCardio, getPower, getEndurance)
 
 import List exposing (foldl)
 import String exposing (toInt)
@@ -67,27 +67,92 @@ wods =
 
 getCardio : List Wod -> Int
 getCardio wods =
-    getFactor .cardio wods
+    getFactor cardio wods
 
 
 getPower : List Wod -> Int
 getPower wods =
-    getFactor .power wods
+    getFactor power wods
 
 
 getEndurance : List Wod -> Int
 getEndurance wods =
-    getFactor .endurance wods
+    getFactor endurance wods
+
+
+normalize : Wod -> Int
+normalize wod =
+    case wod of
+        ForTime _ borders value ->
+            round
+                (100.0
+                    * (value - borders.worst)
+                    / (borders.best - borders.worst)
+                )
+
+        PRInfo _ borders value ->
+            round
+                (100.0
+                    * (toFloat <| value - borders.worst)
+                    / (toFloat <| borders.best - borders.worst)
+                )
+
+        ForReps _ borders value ->
+            round
+                (100.0
+                    * (toFloat <| value - borders.worst)
+                    / (toFloat <| borders.best - borders.worst)
+                )
+
+
+endurance : Wod -> Float
+endurance wod =
+    case wod of
+        ForTime props _ _ ->
+            props.endurance
+
+        PRInfo props _ _ ->
+            props.endurance
+
+        ForReps props _ _ ->
+            props.endurance
+
+
+power : Wod -> Float
+power wod =
+    case wod of
+        ForTime props _ _ ->
+            props.power
+
+        PRInfo props _ _ ->
+            props.power
+
+        ForReps props _ _ ->
+            props.power
+
+
+cardio : Wod -> Float
+cardio wod =
+    case wod of
+        ForTime props _ _ ->
+            props.cardio
+
+        PRInfo props _ _ ->
+            props.cardio
+
+        ForReps props _ _ ->
+            props.cardio
 
 
 getFactor : (Wod -> Float) -> List Wod -> Int
 getFactor factor wods =
     let
         weightedSum =
-            foldl
-                (\w sum -> sum + toFloat (w.value) * (factor w))
-                0
-                wods
+            let
+                addWeightedValue w sum =
+                    sum + toFloat (normalize w) * (factor w)
+            in
+                foldl addWeightedValue 0 wods
 
         sumOfWeights =
             foldl (\w sum -> sum + factor w) 0.0 wods
