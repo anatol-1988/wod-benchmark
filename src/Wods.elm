@@ -4,6 +4,8 @@ import List exposing (foldl)
 import String exposing (toInt)
 import Result exposing (withDefault)
 import Time exposing (Time)
+import Date.Extra.Create exposing (timeFromFields)
+import Date exposing (toTime)
 
 
 type alias WodProperties =
@@ -35,14 +37,14 @@ type Wod
 
 wods : List Wod
 wods =
-    [ ForReps
+    [ ForTime
         { id = "frn"
         , name = "Fran"
         , cardio = 0.3
         , endurance = 0.8
         , power = 0.3
         }
-        { worst = 0, best = 100 }
+        { worst = toTime <| timeFromFields 0 2 0 0, best = toTime <| timeFromFields 0 0 0 0 }
         50
     , ForReps
         { id = "mrh"
@@ -53,7 +55,7 @@ wods =
         }
         { worst = 0, best = 100 }
         50
-    , ForReps
+    , PRInfo
         { id = "sq"
         , name = "Best Squat"
         , cardio = 0.1

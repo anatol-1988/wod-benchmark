@@ -37,7 +37,7 @@ setWodValue id value wod =
     case wod of
         ForTime props borders val ->
             if props.id == id then
-                ForTime props borders <| toTime <| timeFromFields 0 0 0 0
+                ForTime props borders <| toTime <| timeFromFields 0 2 0 0
             else
                 ForTime props borders val
 
@@ -84,39 +84,37 @@ renderSliders wods =
                         li []
                             [ text <| props.name
                             , input
-                                [ type_ "range"
+                                [ type_ "time"
                                 , Html.Attributes.min <| toString <| range.worst
                                 , Html.Attributes.max <| toString <| range.best
-                                , onInput (Slide <| props.id)
+                                , onInput (Slide props.id)
                                 ]
                                 []
-                            , text <| toString v
                             ]
 
                     ForReps props range v ->
                         li []
                             [ text <| props.name
                             , input
-                                [ type_ "range"
+                                [ type_ "number"
                                 , Html.Attributes.min <| toString <| range.worst
                                 , Html.Attributes.max <| toString <| range.best
-                                , onInput (Slide <| props.id)
+                                , Html.Attributes.placeholder <| "reps"
+                                , onInput (Slide props.id)
                                 ]
                                 []
-                            , text <| toString v
                             ]
 
                     PRInfo props range v ->
                         li []
                             [ text <| props.name
                             , input
-                                [ type_ "range"
+                                [ type_ "number"
                                 , Html.Attributes.min <| toString <| range.worst
                                 , Html.Attributes.max <| toString <| range.best
-                                , onInput (Slide <| props.id)
+                                , Html.Attributes.placeholder <| "kg"
                                 ]
                                 []
-                            , text <| toString v
                             ]
             )
         |> ul []
