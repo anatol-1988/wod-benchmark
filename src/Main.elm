@@ -6,7 +6,7 @@ import Html.Events exposing (onInput)
 import List exposing (map)
 import String exposing (toInt)
 import Result exposing (withDefault)
-import Wods exposing (Wod(..), normalize)
+import Wods exposing (Wod, WodType(..), normalize)
 import Date.Extra.Create exposing (timeFromFields)
 import Date exposing (toTime, fromTime)
 import Time exposing (Time)
@@ -55,24 +55,24 @@ type Msg
 
 setWodValue : String -> String -> Wod -> Wod
 setWodValue id value wod =
-    case wod of
-        ForTime props borders val ->
-            if props.id == id then
-                ForTime props borders <| parseTime value
+    case wod.range of
+        ForTime range ->
+            if wod.id == id then
+                { wod | range = ForTime { range | value = parseTime value } }
             else
-                ForTime props borders val
+                { wod | range = ForTime { range | value = range.value } }
 
-        ForReps props borders val ->
-            if props.id == id then
-                ForReps props borders <| Result.toMaybe <| toInt value
+        ForReps range ->
+            if wod.id == id then
+                { wod | range = ForReps { range | value = Result.toMaybe <| toInt value } }
             else
-                ForReps props borders val
+                { wod | range = ForReps { range | value = range.value } }
 
-        PRInfo props borders val ->
-            if props.id == id then
-                PRInfo props borders <| Result.toMaybe <| toInt value
+        PRInfo range ->
+            if wod.id == id then
+                { wod | range = PRInfo { range | value = Result.toMaybe <| toInt value } }
             else
-                PRInfo props borders val
+                { wod | range = PRInfo { range | value = range.value } }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -100,41 +100,41 @@ renderSliders wods =
     wods
         |> List.map
             (\w ->
-                case w of
-                    ForTime props range v ->
+                case w.range of
+                    ForTime range ->
                         li []
-                            [ text <| props.name
+                            [ text <| w.name
                             , input
                                 [ type_ "text"
-                                , onInput (Slide props.id)
+                                , onInput (Slide w.id)
                                 ]
                                 []
                             , text <| toString <| Wods.normalize w
                             ]
 
-                    ForReps props range v ->
+                    ForReps range ->
                         li []
-                            [ text <| props.name
+                            [ text <| w.name
                             , input
                                 [ type_ "number"
                                 , Html.Attributes.min <| toString <| range.worst
                                 , Html.Attributes.max <| toString <| range.best
                                 , Html.Attributes.placeholder <| "reps"
-                                , onInput (Slide props.id)
+                                , onInput (Slide w.id)
                                 ]
                                 []
                             , text <| toString <| Wods.normalize w
                             ]
 
-                    PRInfo props range v ->
+                    PRInfo range ->
                         li []
-                            [ text <| props.name
+                            [ text <| w.name
                             , input
                                 [ type_ "number"
                                 , Html.Attributes.min <| toString <| range.worst
                                 , Html.Attributes.max <| toString <| range.best
                                 , Html.Attributes.placeholder <| "kg"
-                                , onInput (Slide props.id)
+                                , onInput (Slide w.id)
                                 ]
                                 []
                             , text <| toString <| Wods.normalize w

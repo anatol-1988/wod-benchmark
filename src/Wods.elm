@@ -1,6 +1,7 @@
 module Wods
     exposing
-        ( Wod(..)
+        ( Wod
+        , WodType(..)
         , wods
         , getCardio
         , getPower
@@ -16,152 +17,112 @@ import Date.Extra.Create exposing (timeFromFields)
 import Date exposing (toTime)
 
 
-type alias WodProperties =
-    { id : String
-    , name : String
-    , cardio : Float
-    , endurance : Float
-    , power : Float
-    }
-
-
 type alias RangeInt =
     { worst : Int
     , best : Int
+    , value : Maybe Int
     }
 
 
 type alias RangeTime =
     { worst : Time
     , best : Time
+    , value : Maybe Time
     }
 
 
-type Wod
-    = ForTime WodProperties RangeTime (Maybe Time)
-    | PRInfo WodProperties RangeInt (Maybe Int)
-    | ForReps WodProperties RangeInt (Maybe Int)
+type WodType
+    = ForTime RangeTime
+    | PRInfo RangeInt
+    | ForReps RangeInt
+
+
+type alias Wod =
+    { id : String
+    , name : String
+    , cardio : Float
+    , endurance : Float
+    , power : Float
+    , range : WodType
+    }
 
 
 wods : List Wod
 wods =
-    [ ForTime
-        { id = "frn"
-        , name = "Fran"
-        , cardio = 0.3
-        , endurance = 0.8
-        , power = 0.3
-        }
-        { worst = toTime <| timeFromFields 0 2 0 0
-        , best = toTime <| timeFromFields 0 0 0 0
-        }
-        Nothing
-    , ForReps
-        { id = "mrh"
-        , name = "Murph"
-        , cardio = 0.9
-        , endurance = 0.3
-        , power = 0.1
-        }
-        { worst = 0, best = 100 }
-        Nothing
-    , PRInfo
-        { id = "sq"
-        , name = "Best Squat"
-        , cardio = 0.1
-        , endurance = 0.3
-        , power = 0.9
-        }
-        { worst = 0, best = 100 }
-        Nothing
+    [ { id = "frn"
+      , name = "Fran"
+      , cardio = 0.3
+      , endurance = 0.8
+      , power = 0.3
+      , range =
+            ForTime
+                { worst = toTime <| timeFromFields 0 2 0 0
+                , best = toTime <| timeFromFields 0 0 0 0
+                , value = Nothing
+                }
+      }
+    , { id = "mrh"
+      , name = "Murph"
+      , cardio = 0.9
+      , endurance = 0.3
+      , power = 0.1
+      , range = ForReps { worst = 0, best = 100, value = Nothing }
+      }
+    , { id = "sq"
+      , name = "Best Squat"
+      , cardio = 0.1
+      , endurance = 0.3
+      , power = 0.9
+      , range = ForReps { worst = 0, best = 100, value = Nothing }
+      }
     ]
 
 
 getCardio : List Wod -> Int
 getCardio wods =
-    getFactor cardio wods
+    getFactor .cardio wods
 
 
 getPower : List Wod -> Int
 getPower wods =
-    getFactor power wods
+    getFactor .power wods
 
 
 getEndurance : List Wod -> Int
 getEndurance wods =
-    getFactor endurance wods
+    getFactor .endurance wods
 
 
 normalize : Wod -> Maybe Int
 normalize wod =
-    case wod of
-        ForTime _ borders value ->
-            case value of
-                Just v ->
-                    Just <| round (100.0 * (v - borders.worst) / (borders.best - borders.worst))
+    let
+        ratio =
+            case wod.range of
+                ForTime range ->
+                    case range.value of
+                        Just v ->
+                            Just <| (v - range.worst) / (range.best - range.worst)
 
-                Nothing ->
-                    Nothing
+                        Nothing ->
+                            Nothing
 
-        PRInfo _ borders value ->
-            case value of
-                Just v ->
-                    Just <|
-                        round
-                            (100.0
-                                * (toFloat <| v - borders.worst)
-                                / (toFloat <| borders.best - borders.worst)
-                            )
+                PRInfo range ->
+                    case range.value of
+                        Just v ->
+                            Just <| (toFloat <| v - range.worst) / (toFloat <| range.best - range.worst)
 
-                Nothing ->
-                    Nothing
+                        Nothing ->
+                            Nothing
 
-        ForReps _ borders value ->
-            case value of
-                Just v ->
-                    Just <| round (100.0 * (toFloat <| v - borders.worst) / (toFloat <| borders.best - borders.worst))
+                ForReps range ->
+                    case range.value of
+                        Just v ->
+                            Just <| (toFloat <| v - range.worst) / (toFloat <| range.best - range.worst)
 
-                Nothing ->
-                    Nothing
-
-
-endurance : Wod -> Float
-endurance wod =
-    case wod of
-        ForTime props _ _ ->
-            props.endurance
-
-        PRInfo props _ _ ->
-            props.endurance
-
-        ForReps props _ _ ->
-            props.endurance
-
-
-power : Wod -> Float
-power wod =
-    case wod of
-        ForTime props _ _ ->
-            props.power
-
-        PRInfo props _ _ ->
-            props.power
-
-        ForReps props _ _ ->
-            props.power
-
-
-cardio : Wod -> Float
-cardio wod =
-    case wod of
-        ForTime props _ _ ->
-            props.cardio
-
-        PRInfo props _ _ ->
-            props.cardio
-
-        ForReps props _ _ ->
-            props.cardio
+                        Nothing ->
+                            Nothing
+    in
+        Maybe.map (\x -> round <| 100.0 * x) ratio
 
 
 getFactor : (Wod -> Float) -> List Wod -> Int
