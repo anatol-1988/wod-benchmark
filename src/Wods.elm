@@ -38,9 +38,9 @@ type alias RangeTime =
 
 
 type Wod
-    = ForTime WodProperties RangeTime Time
-    | PRInfo WodProperties RangeInt Int
-    | ForReps WodProperties RangeInt Int
+    = ForTime WodProperties RangeTime (Maybe Time)
+    | PRInfo WodProperties RangeInt (Maybe Int)
+    | ForReps WodProperties RangeInt (Maybe Int)
 
 
 wods : List Wod
@@ -52,8 +52,10 @@ wods =
         , endurance = 0.8
         , power = 0.3
         }
-        { worst = toTime <| timeFromFields 0 2 0 0, best = toTime <| timeFromFields 0 0 0 0 }
-        50
+        { worst = toTime <| timeFromFields 0 2 0 0
+        , best = toTime <| timeFromFields 0 0 0 0
+        }
+        Nothing
     , ForReps
         { id = "mrh"
         , name = "Murph"
@@ -62,7 +64,7 @@ wods =
         , power = 0.1
         }
         { worst = 0, best = 100 }
-        50
+        Nothing
     , PRInfo
         { id = "sq"
         , name = "Best Squat"
@@ -71,7 +73,7 @@ wods =
         , power = 0.9
         }
         { worst = 0, best = 100 }
-        50
+        Nothing
     ]
 
 
@@ -90,29 +92,37 @@ getEndurance wods =
     getFactor endurance wods
 
 
-normalize : Wod -> Int
+normalize : Wod -> Maybe Int
 normalize wod =
     case wod of
         ForTime _ borders value ->
-            round
-                (100.0
-                    * (value - borders.worst)
-                    / (borders.best - borders.worst)
-                )
+            case value of
+                Just v ->
+                    Just <| round (100.0 * (v - borders.worst) / (borders.best - borders.worst))
+
+                Nothing ->
+                    Nothing
 
         PRInfo _ borders value ->
-            round
-                (100.0
-                    * (toFloat <| value - borders.worst)
-                    / (toFloat <| borders.best - borders.worst)
-                )
+            case value of
+                Just v ->
+                    Just <|
+                        round
+                            (100.0
+                                * (toFloat <| v - borders.worst)
+                                / (toFloat <| borders.best - borders.worst)
+                            )
+
+                Nothing ->
+                    Nothing
 
         ForReps _ borders value ->
-            round
-                (100.0
-                    * (toFloat <| value - borders.worst)
-                    / (toFloat <| borders.best - borders.worst)
-                )
+            case value of
+                Just v ->
+                    Just <| round (100.0 * (toFloat <| v - borders.worst) / (toFloat <| borders.best - borders.worst))
+
+                Nothing ->
+                    Nothing
 
 
 endurance : Wod -> Float
@@ -160,11 +170,19 @@ getFactor factor wods =
         weightedSum =
             let
                 addWeightedValue w sum =
-                    sum + toFloat (normalize w) * (factor w)
+                    sum + (toFloat (Maybe.withDefault 0 (normalize w))) * (factor w)
             in
                 foldl addWeightedValue 0 wods
 
         sumOfWeights =
-            foldl (\w sum -> sum + factor w) 0.0 wods
+            foldl
+                (\w sum ->
+                    if normalize w /= Nothing then
+                        sum + factor w
+                    else
+                        sum
+                )
+                0.0
+                wods
     in
         round (weightedSum / sumOfWeights)

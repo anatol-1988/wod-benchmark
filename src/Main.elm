@@ -12,24 +12,23 @@ import Date exposing (toTime, fromTime)
 import Time exposing (Time)
 
 
-parseTime : String -> Time
+parseTime : String -> Maybe Time
 parseTime str =
     let
         parts =
             String.split ":" str
-
-        date =
-            case parts of
-                m :: s :: _ ->
-                    timeFromFields 0
-                        (withDefault 0 <| toInt m)
-                        (withDefault 0 <| toInt s)
-                        0
-
-                _ ->
-                    timeFromFields 0 0 0 0
     in
-        toTime date
+        case parts of
+            m :: s :: _ ->
+                Just <|
+                    toTime <|
+                        timeFromFields 0
+                            (withDefault 0 <| toInt m)
+                            (withDefault 0 <| toInt s)
+                            0
+
+            _ ->
+                Nothing
 
 
 
@@ -65,13 +64,13 @@ setWodValue id value wod =
 
         ForReps props borders val ->
             if props.id == id then
-                ForReps props borders <| withDefault 0 <| toInt value
+                ForReps props borders <| Result.toMaybe <| toInt value
             else
                 ForReps props borders val
 
         PRInfo props borders val ->
             if props.id == id then
-                PRInfo props borders <| withDefault 0 <| toInt value
+                PRInfo props borders <| Result.toMaybe <| toInt value
             else
                 PRInfo props borders val
 
@@ -81,7 +80,8 @@ update msg model =
     case msg of
         Slide id v ->
             let
-                value = v
+                value =
+                    v
             in
                 ( { model | wods = map (setWodValue id value) model.wods }
                 , Cmd.none
@@ -134,6 +134,7 @@ renderSliders wods =
                                 , Html.Attributes.min <| toString <| range.worst
                                 , Html.Attributes.max <| toString <| range.best
                                 , Html.Attributes.placeholder <| "kg"
+                                , onInput (Slide props.id)
                                 ]
                                 []
                             , text <| toString <| Wods.normalize w
