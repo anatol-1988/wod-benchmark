@@ -93,34 +93,19 @@ getEndurance wods =
     getFactor .endurance wods
 
 
-normalize : Wod -> Maybe Int
-normalize wod =
+normalize : WodType -> Maybe Int
+normalize range =
     let
         ratio =
-            case wod.range of
+            case range of
                 ForTime range ->
-                    case range.value of
-                        Just v ->
-                            Just <| (v - range.worst) / (range.best - range.worst)
-
-                        Nothing ->
-                            Nothing
+                    Maybe.map (\x -> (x - range.worst) / (range.best - range.worst)) range.value
 
                 PRInfo range ->
-                    case range.value of
-                        Just v ->
-                            Just <| (toFloat <| v - range.worst) / (toFloat <| range.best - range.worst)
-
-                        Nothing ->
-                            Nothing
+                    Maybe.map (\x -> (toFloat <| x - range.worst) / (toFloat <| range.best - range.worst)) range.value
 
                 ForReps range ->
-                    case range.value of
-                        Just v ->
-                            Just <| (toFloat <| v - range.worst) / (toFloat <| range.best - range.worst)
-
-                        Nothing ->
-                            Nothing
+                    Maybe.map (\x -> (toFloat <| x - range.worst) / (toFloat <| range.best - range.worst)) range.value
     in
         Maybe.map (\x -> round <| 100.0 * x) ratio
 
@@ -131,14 +116,14 @@ getFactor factor wods =
         weightedSum =
             let
                 addWeightedValue w sum =
-                    sum + (toFloat (Maybe.withDefault 0 (normalize w))) * (factor w)
+                    sum + (toFloat (Maybe.withDefault 0 (normalize w.range))) * (factor w)
             in
                 foldl addWeightedValue 0 wods
 
         sumOfWeights =
             foldl
                 (\w sum ->
-                    if normalize w /= Nothing then
+                    if normalize w.range /= Nothing then
                         sum + factor w
                     else
                         sum

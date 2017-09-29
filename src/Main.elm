@@ -109,7 +109,7 @@ renderSliders wods =
                                 , onInput (Slide w.id)
                                 ]
                                 []
-                            , text <| toString <| Wods.normalize w
+                            , text <| toString <| Wods.normalize w.range
                             ]
 
                     ForReps range ->
@@ -123,7 +123,7 @@ renderSliders wods =
                                 , onInput (Slide w.id)
                                 ]
                                 []
-                            , text <| toString <| Wods.normalize w
+                            , text <| toString <| Wods.normalize w.range
                             ]
 
                     PRInfo range ->
@@ -137,7 +137,7 @@ renderSliders wods =
                                 , onInput (Slide w.id)
                                 ]
                                 []
-                            , text <| toString <| Wods.normalize w
+                            , text <| toString <| Wods.normalize w.range
                             ]
             )
         |> ul []
