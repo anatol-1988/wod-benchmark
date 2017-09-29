@@ -6,9 +6,31 @@ import Html.Events exposing (onInput)
 import List exposing (map)
 import String exposing (toInt)
 import Result exposing (withDefault)
-import Wods exposing (Wod(..))
+import Wods exposing (Wod(..), normalize)
 import Date.Extra.Create exposing (timeFromFields)
-import Date exposing (toTime)
+import Date exposing (toTime, fromTime)
+import Time exposing (Time)
+
+
+parseTime : String -> Time
+parseTime str =
+    let
+        parts =
+            String.split ":" str
+
+        date =
+            case parts of
+                m :: s :: _ ->
+                    timeFromFields 0
+                        (withDefault 0 <| toInt m)
+                        (withDefault 0 <| toInt s)
+                        0
+
+                _ ->
+                    timeFromFields 0 0 0 0
+    in
+        toTime date
+
 
 
 ---- MODEL ----
@@ -37,7 +59,7 @@ setWodValue id value wod =
     case wod of
         ForTime props borders val ->
             if props.id == id then
-                ForTime props borders <| toTime <| timeFromFields 0 2 0 0
+                ForTime props borders <| parseTime value
             else
                 ForTime props borders val
 
@@ -59,8 +81,7 @@ update msg model =
     case msg of
         Slide id v ->
             let
-                value =
-                    v
+                value = v
             in
                 ( { model | wods = map (setWodValue id value) model.wods }
                 , Cmd.none
@@ -84,12 +105,11 @@ renderSliders wods =
                         li []
                             [ text <| props.name
                             , input
-                                [ type_ "time"
-                                , Html.Attributes.min <| toString <| range.worst
-                                , Html.Attributes.max <| toString <| range.best
+                                [ type_ "text"
                                 , onInput (Slide props.id)
                                 ]
                                 []
+                            , text <| toString <| Wods.normalize w
                             ]
 
                     ForReps props range v ->
@@ -103,6 +123,7 @@ renderSliders wods =
                                 , onInput (Slide props.id)
                                 ]
                                 []
+                            , text <| toString <| Wods.normalize w
                             ]
 
                     PRInfo props range v ->
@@ -115,6 +136,7 @@ renderSliders wods =
                                 , Html.Attributes.placeholder <| "kg"
                                 ]
                                 []
+                            , text <| toString <| Wods.normalize w
                             ]
             )
         |> ul []

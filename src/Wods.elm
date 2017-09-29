@@ -1,4 +1,12 @@
-module Wods exposing (Wod(..), wods, getCardio, getPower, getEndurance)
+module Wods
+    exposing
+        ( Wod(..)
+        , wods
+        , getCardio
+        , getPower
+        , getEndurance
+        , normalize
+        )
 
 import List exposing (foldl)
 import String exposing (toInt)
