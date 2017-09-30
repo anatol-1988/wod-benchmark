@@ -10,6 +10,7 @@ import Wods exposing (Wod, WodType(..), normalize)
 import Date.Extra.Create exposing (timeFromFields)
 import Date exposing (toTime, fromTime)
 import Time exposing (Time)
+import Plot exposing (..)
 
 
 parseTime : String -> Maybe Time
@@ -169,6 +170,20 @@ view model =
                 ]
             , div [ class "row" ]
                 [ text <| "Power: " ++ (toString <| Wods.getPower model.wods) ]
+            , div [ class "row" ]
+                [ viewBars
+                    (groups (List.map (\data -> group data.label data.heights)))
+                    [ { label = "Cardio"
+                      , heights = [ toFloat <| Wods.getCardio model.wods ]
+                      }
+                    , { label = "Endurance"
+                      , heights = [ toFloat <| Wods.getEndurance model.wods ]
+                      }
+                    , { label = "Power"
+                      , heights = [ toFloat <| Wods.getPower model.wods ]
+                      }
+                    ]
+                ]
             ]
         ]
 
