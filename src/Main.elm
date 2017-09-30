@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, img, input, ul, li, option)
+import Html exposing (Html, text, div, img, input, ul, li, option, label)
 import Html.Attributes exposing (src, type_, min, max, value, class)
 import Html.Events exposing (onInput)
 import List exposing (map)
@@ -104,54 +104,60 @@ update msg model =
 ---- VIEW ----
 
 
-renderInputs : List Wod -> Html Msg
+renderInputs : List Wod -> List (Html Msg)
 renderInputs wods =
     wods
         |> List.map
             (\w ->
-                li []
-                    [ text <| w.name
-                    , case w.range of
-                        ForTime range ->
-                            input
-                                [ type_ "text"
-                                , Html.Attributes.placeholder <| "mm:ss"
-                                , onInput (Slide w.id)
-                                ]
-                                []
+                div [ Html.Attributes.class "row" ]
+                    [ div [ Html.Attributes.class "input-field col s6" ]
+                        [ case w.range of
+                            ForTime range ->
+                                input
+                                    [ type_ "text"
+                                    , Html.Attributes.id w.id
+                                    , Html.Attributes.placeholder "mm:ss"
+                                    , onInput (Slide w.id)
+                                    ]
+                                    []
 
-                        ForReps range ->
-                            input
-                                [ type_ "number"
-                                , Html.Attributes.min <| toString <| range.worst
-                                , Html.Attributes.max <| toString <| range.best
-                                , Html.Attributes.placeholder <| "reps"
-                                , onInput (Slide w.id)
-                                ]
-                                []
+                            ForReps range ->
+                                input
+                                    [ type_ "number"
+                                    , Html.Attributes.id w.id
+                                    , Html.Attributes.min <| toString range.worst
+                                    , Html.Attributes.max <| toString range.best
+                                    , Html.Attributes.placeholder "reps"
+                                    , onInput (Slide w.id)
+                                    ]
+                                    []
 
-                        PRInfo range ->
-                            input
-                                [ type_ "number"
-                                , Html.Attributes.min <| toString <| range.worst
-                                , Html.Attributes.max <| toString <| range.best
-                                , Html.Attributes.placeholder <| "kg"
-                                , onInput (Slide w.id)
-                                ]
-                                []
-                    , text <|
-                        "Normalized: "
-                            ++ (toString <| Wods.normalize w.range)
+                            PRInfo range ->
+                                input
+                                    [ type_ "number"
+                                    , Html.Attributes.id w.id
+                                    , Html.Attributes.min <| toString range.worst
+                                    , Html.Attributes.max <| toString range.best
+                                    , Html.Attributes.placeholder "kg"
+                                    , onInput (Slide w.id)
+                                    ]
+                                    []
+                        , label [ Html.Attributes.for w.id ] [ text <| w.name ]
+                        ]
+                    , Html.p [ Html.Attributes.class "flow-text" ]
+                        [ text <|
+                            "Normalized: "
+                                ++ (toString <| Wods.normalize w.range)
+                        ]
                     ]
             )
-        |> ul []
 
 
 view : Model -> Html Msg
 view model =
     div [ class "row" ]
         [ div [ class "col s6" ]
-            [ renderInputs model.wods ]
+            (renderInputs model.wods)
         , div [ class "col s6" ]
             [ div [ class "row" ]
                 [ text <|
@@ -167,15 +173,27 @@ view model =
                 [ text <| "Power: " ++ (toString <| Wods.getPower model.wods) ]
             , div [ class "row" ]
                 [ viewBars
-                    (groups (List.map (\data -> group data.label data.heights)))
+                    (groups (List.map (\data -> group data.label data.height)))
                     [ { label = "Cardio"
-                      , heights = [ toFloat <| Wods.getCardio model.wods ]
+                      , height =
+                            [ toFloat <|
+                                Maybe.withDefault 0 <|
+                                    Wods.getCardio model.wods
+                            ]
                       }
                     , { label = "Endurance"
-                      , heights = [ toFloat <| Wods.getEndurance model.wods ]
+                      , height =
+                            [ toFloat <|
+                                Maybe.withDefault 0 <|
+                                    Wods.getEndurance model.wods
+                            ]
                       }
                     , { label = "Power"
-                      , heights = [ toFloat <| Wods.getPower model.wods ]
+                      , height =
+                            [ toFloat <|
+                                Maybe.withDefault 0 <|
+                                    Wods.getPower model.wods
+                            ]
                       }
                     ]
                 ]

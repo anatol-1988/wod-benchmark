@@ -136,29 +136,28 @@ wods =
     ]
 
 
-getCardio : List Wod -> Int
+getCardio : List Wod -> Maybe Int
 getCardio wods =
     getFactor .cardio wods
 
 
-getPower : List Wod -> Int
+getPower : List Wod -> Maybe Int
 getPower wods =
     getFactor .power wods
 
 
-getEndurance : List Wod -> Int
+getEndurance : List Wod -> Maybe Int
 getEndurance wods =
     getFactor .endurance wods
 
 
-getTotalEstimation : List Wod -> Int
+getTotalEstimation : List Wod -> Maybe Int
 getTotalEstimation wods =
-    round <|
-        cubeRoot <|
-            toFloat <|
-                (getCardio wods)
-                    * (getPower wods)
-                    * (getEndurance wods)
+    let
+        getRoot cardio power endurance =
+            round <| cubeRoot (toFloat <| cardio * power * endurance)
+    in
+        Maybe.map3 getRoot (getCardio wods) (getPower wods) (getEndurance wods)
 
 
 normalize : WodType -> Maybe Int
@@ -190,7 +189,7 @@ normalize range =
         Maybe.map (\x -> round <| 100.0 * (clamp 0.0 1.0 x)) ratio
 
 
-getFactor : (Wod -> Float) -> List Wod -> Int
+getFactor : (Wod -> Float) -> List Wod -> Maybe Int
 getFactor factor wods =
     let
         weightedSum =
@@ -213,4 +212,7 @@ getFactor factor wods =
                 0.0
                 wods
     in
-        round (weightedSum / sumOfWeights)
+        if sumOfWeights > 0.0 then
+            Just <| round (weightedSum / sumOfWeights)
+        else
+            Nothing
