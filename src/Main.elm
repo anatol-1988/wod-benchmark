@@ -109,22 +109,19 @@ renderInputs wods =
     wods
         |> List.map
             (\w ->
-                case w.range of
-                    ForTime range ->
-                        li []
-                            [ text <| w.name
-                            , input
+                li []
+                    [ text <| w.name
+                    , case w.range of
+                        ForTime range ->
+                            input
                                 [ type_ "text"
+                                , Html.Attributes.placeholder <| "mm:ss"
                                 , onInput (Slide w.id)
                                 ]
                                 []
-                            , text <| toString <| Wods.normalize w.range
-                            ]
 
-                    ForReps range ->
-                        li []
-                            [ text <| w.name
-                            , input
+                        ForReps range ->
+                            input
                                 [ type_ "number"
                                 , Html.Attributes.min <| toString <| range.worst
                                 , Html.Attributes.max <| toString <| range.best
@@ -132,13 +129,9 @@ renderInputs wods =
                                 , onInput (Slide w.id)
                                 ]
                                 []
-                            , text <| toString <| Wods.normalize w.range
-                            ]
 
-                    PRInfo range ->
-                        li []
-                            [ text <| w.name
-                            , input
+                        PRInfo range ->
+                            input
                                 [ type_ "number"
                                 , Html.Attributes.min <| toString <| range.worst
                                 , Html.Attributes.max <| toString <| range.best
@@ -146,8 +139,10 @@ renderInputs wods =
                                 , onInput (Slide w.id)
                                 ]
                                 []
-                            , text <| toString <| Wods.normalize w.range
-                            ]
+                    , text <|
+                        "Normalized: "
+                            ++ (toString <| Wods.normalize w.range)
+                    ]
             )
         |> ul []
 
@@ -184,6 +179,11 @@ view model =
                       }
                     ]
                 ]
+            ]
+        , div [ class "row" ]
+            [ text <|
+                "General estimation: "
+                    ++ (toString <| Wods.getTotalEstimation model.wods)
             ]
         ]
 

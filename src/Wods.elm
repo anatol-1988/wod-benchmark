@@ -6,6 +6,7 @@ module Wods
         , getCardio
         , getPower
         , getEndurance
+        , getTotalEstimation
         , normalize
         )
 
@@ -15,6 +16,7 @@ import Result exposing (withDefault)
 import Time exposing (Time)
 import Date.Extra.Create exposing (timeFromFields)
 import Date exposing (toTime)
+import Arithmetic exposing (cubeRoot)
 
 
 type alias RangeInt =
@@ -72,8 +74,8 @@ wods =
       , power = 0.1
       , range =
             ForTime
-                { worst = toTime <| timeFromFields 0 5 0 0
-                , best = toTime <| timeFromFields 0 2 1 0
+                { worst = toTime <| timeFromFields 0 60 0 0
+                , best = toTime <| timeFromFields 0 30 0 0
                 , value = Nothing
                 }
       }
@@ -149,6 +151,16 @@ getEndurance wods =
     getFactor .endurance wods
 
 
+getTotalEstimation : List Wod -> Int
+getTotalEstimation wods =
+    round <|
+        cubeRoot <|
+            toFloat <|
+                (getCardio wods)
+                    * (getPower wods)
+                    * (getEndurance wods)
+
+
 normalize : WodType -> Maybe Int
 normalize range =
     let
@@ -175,7 +187,7 @@ normalize range =
                         )
                         range.value
     in
-        Maybe.map (\x -> round <| 100.0 * x) ratio
+        Maybe.map (\x -> round <| 100.0 * (clamp 0.0 1.0 x)) ratio
 
 
 getFactor : (Wod -> Float) -> List Wod -> Int
