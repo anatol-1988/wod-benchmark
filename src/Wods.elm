@@ -47,6 +47,10 @@ type alias Wod =
     }
 
 
+
+--- List of WODs ---
+
+
 wods : List Wod
 wods =
     [ { id = "frn"
@@ -56,8 +60,8 @@ wods =
       , power = 0.3
       , range =
             ForTime
-                { worst = toTime <| timeFromFields 0 2 0 0
-                , best = toTime <| timeFromFields 0 0 0 0
+                { worst = toTime <| timeFromFields 0 5 0 0
+                , best = toTime <| timeFromFields 0 2 1 0
                 , value = Nothing
                 }
       }
@@ -66,14 +70,66 @@ wods =
       , cardio = 0.9
       , endurance = 0.3
       , power = 0.1
-      , range = ForReps { worst = 0, best = 100, value = Nothing }
+      , range =
+            ForTime
+                { worst = toTime <| timeFromFields 0 5 0 0
+                , best = toTime <| timeFromFields 0 2 1 0
+                , value = Nothing
+                }
       }
     , { id = "sq"
-      , name = "Best Squat"
+      , name = "Back Squat"
       , cardio = 0.1
       , endurance = 0.3
       , power = 0.9
-      , range = ForReps { worst = 0, best = 100, value = Nothing }
+      , range = PRInfo { worst = 40, best = 215, value = Nothing }
+      }
+    , { id = "clj"
+      , name = "Clean and Jerk"
+      , cardio = 0.1
+      , endurance = 0.4
+      , power = 1.0
+      , range = PRInfo { worst = 20, best = 170, value = Nothing }
+      }
+    , { id = "sntch"
+      , name = "Snatch"
+      , cardio = 0.1
+      , endurance = 0.3
+      , power = 0.9
+      , range = PRInfo { worst = 15, best = 140, value = Nothing }
+      }
+    , { id = "dlft"
+      , name = "Deadlift"
+      , cardio = 0.1
+      , endurance = 0.3
+      , power = 0.9
+      , range = PRInfo { worst = 60, best = 260, value = Nothing }
+      }
+    , { id = "fgb"
+      , name = "Fight Gone Bad"
+      , cardio = 0.9
+      , endurance = 0.6
+      , power = 0.3
+      , range = ForReps { worst = 200, best = 508, value = Nothing }
+      }
+    , { id = "plps"
+      , name = "Max Pull-ups"
+      , cardio = 0.9
+      , endurance = 0.6
+      , power = 0.3
+      , range = ForReps { worst = 5, best = 75, value = Nothing }
+      }
+    , { id = "grc"
+      , name = "Grace"
+      , cardio = 0.3
+      , endurance = 0.9
+      , power = 0.7
+      , range =
+            ForTime
+                { worst = toTime <| timeFromFields 0 6 0 0
+                , best = toTime <| timeFromFields 0 1 11 0
+                , value = Nothing
+                }
       }
     ]
 
@@ -99,13 +155,25 @@ normalize range =
         ratio =
             case range of
                 ForTime range ->
-                    Maybe.map (\x -> (x - range.worst) / (range.best - range.worst)) range.value
+                    Maybe.map
+                        (\x -> (x - range.worst) / (range.best - range.worst))
+                        range.value
 
                 PRInfo range ->
-                    Maybe.map (\x -> (toFloat <| x - range.worst) / (toFloat <| range.best - range.worst)) range.value
+                    Maybe.map
+                        (\x ->
+                            (toFloat <| x - range.worst)
+                                / (toFloat <| range.best - range.worst)
+                        )
+                        range.value
 
                 ForReps range ->
-                    Maybe.map (\x -> (toFloat <| x - range.worst) / (toFloat <| range.best - range.worst)) range.value
+                    Maybe.map
+                        (\x ->
+                            (toFloat <| x - range.worst)
+                                / (toFloat <| range.best - range.worst)
+                        )
+                        range.value
     in
         Maybe.map (\x -> round <| 100.0 * x) ratio
 
@@ -116,7 +184,9 @@ getFactor factor wods =
         weightedSum =
             let
                 addWeightedValue w sum =
-                    sum + (toFloat (Maybe.withDefault 0 (normalize w.range))) * (factor w)
+                    sum
+                        + (toFloat (Maybe.withDefault 0 (normalize w.range)))
+                        * (factor w)
             in
                 foldl addWeightedValue 0 wods
 

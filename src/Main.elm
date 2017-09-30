@@ -64,13 +64,21 @@ setWodValue id value wod =
 
         ForReps range ->
             if wod.id == id then
-                { wod | range = ForReps { range | value = Result.toMaybe <| toInt value } }
+                { wod
+                    | range =
+                        ForReps
+                            { range | value = Result.toMaybe <| toInt value }
+                }
             else
                 { wod | range = ForReps { range | value = range.value } }
 
         PRInfo range ->
             if wod.id == id then
-                { wod | range = PRInfo { range | value = Result.toMaybe <| toInt value } }
+                { wod
+                    | range =
+                        PRInfo
+                            { range | value = Result.toMaybe <| toInt value }
+                }
             else
                 { wod | range = PRInfo { range | value = range.value } }
 
@@ -95,8 +103,8 @@ update msg model =
 ---- VIEW ----
 
 
-renderSliders : List Wod -> Html Msg
-renderSliders wods =
+renderInputs : List Wod -> Html Msg
+renderInputs wods =
     wods
         |> List.map
             (\w ->
@@ -147,7 +155,7 @@ view : Model -> Html Msg
 view model =
     div [ class "row" ]
         [ div [ class "col s6" ]
-            [ renderSliders model.wods ]
+            [ renderInputs model.wods ]
         , div [ class "col s6" ]
             [ div [ class "row" ]
                 [ text <|
