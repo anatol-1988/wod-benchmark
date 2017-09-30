@@ -200,7 +200,7 @@ view model =
             ]
         , div [ class "row" ]
             [ text <|
-                "General estimation: "
+                "General Estimation: "
                     ++ (toString <| Wods.getTotalEstimation model.wods)
             ]
         ]
