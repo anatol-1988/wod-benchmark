@@ -1,7 +1,21 @@
 module Diagram exposing (plotBenchmarks, Size)
 
-import Svg exposing (circle, svg)
-import Svg.Attributes exposing (cx, cy, r, viewBox, height, width, class, id)
+import Svg exposing (circle, svg, text_, text)
+import Svg.Attributes
+    exposing
+        ( cx
+        , cy
+        , x
+        , y
+        , r
+        , viewBox
+        , height
+        , width
+        , class
+        , id
+        , alignmentBaseline
+        , textAnchor
+        )
 import Html exposing (Html)
 
 
@@ -11,8 +25,15 @@ type alias Size =
     }
 
 
-plotBenchmarks : Size -> Html.Html msg
-plotBenchmarks size =
+type alias Result =
+    { name : String
+    , score : Int
+    , diff : Int
+    }
+
+
+plotBenchmarks : Size -> Result -> Html.Html msg
+plotBenchmarks size result =
     let
         centerX =
             size.width // 2
@@ -26,7 +47,7 @@ plotBenchmarks size =
         plotFromPolar ( r, theta ) =
             let
                 ( x, y ) =
-                    fromPolar ( (toFloat r), theta )
+                    fromPolar ( toFloat r, theta )
             in
                 ( round x + centerX, round y + centerY )
 
@@ -43,6 +64,55 @@ plotBenchmarks size =
                     , class "diagram-circle"
                     ]
                     []
+
+        drawResult ( r, theta, scoreId ) =
+            let
+                ( centerX, centerY ) =
+                    plotFromPolar ( r, theta )
+
+                ( nameX, nameY ) =
+                    plotFromPolar ( 15, pi / 2 )
+
+                ( scoreX, scoreY ) =
+                    plotFromPolar ( 0, 0 )
+
+                ( diffX, diffY ) =
+                    plotFromPolar ( 25, 0 )
+
+                ( diffText, diffClass ) =
+                    if result.diff > 0 then
+                        ( "+" ++ toString result.diff, "positive" )
+                    else if result.diff < 0 then
+                        ( "−" ++ toString result.diff, "negative" )
+                    else
+                        ( toString result.diff, "zero" )
+            in
+                [ text_
+                    [ x (toString nameX)
+                    , y (toString nameY)
+                    , alignmentBaseline "hanging"
+                    , textAnchor "middle"
+                    , class "result-title"
+                    ]
+                    [ text result.name ]
+                , text_
+                    [ x (toString scoreX)
+                    , y (toString scoreY)
+                    , alignmentBaseline "middle"
+                    , textAnchor "middle"
+                    , class <| "result-score"
+                    , id scoreId
+                    ]
+                    [ text <| toString result.score ]
+                , text_
+                    [ x (toString diffX)
+                    , y (toString diffY)
+                    , alignmentBaseline "middle"
+                    , textAnchor "start"
+                    , class <| "result-diff " ++ diffClass
+                    ]
+                    [ text <| diffText ]
+                ]
     in
         svg
             [ width (toString size.width)
@@ -63,4 +133,5 @@ plotBenchmarks size =
                         ]
                         []
                    ]
+                ++ drawResult ( 0, 0, "totalScore" )
             )

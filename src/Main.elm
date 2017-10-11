@@ -173,7 +173,7 @@ view model =
             , div [ class "row" ]
                 [ text <| "Power: " ++ (toString <| Wods.getPower model.wods) ]
             , div [ class "row" ]
-                [ plotBenchmarks { width = 480, height = 480 } ]
+                [ plotBenchmarks { width = 480, height = 480 } { name = "Fit Score", score = 74, diff = 5 } ]
             , div [ class "row" ]
                 [ viewBars
                     (groups (List.map (\data -> group data.label data.height)))

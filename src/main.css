@@ -35,3 +35,34 @@ img {
 .diagram-circle {
   opacity: 0.95;
 }
+
+.result-title {
+  font-size: 0.4em;
+  font-family: "Roboto";
+}
+
+.result-score {
+  font-size: 1.3em;
+  font-family: "Roboto";
+}
+
+#totalScore {
+  font-weight: bold;
+}
+
+.result-diff {
+  font-size: 0.5em;
+  font-family: "Roboto";
+}
+
+.positive {
+  fill: green;
+}
+
+.negative {
+  fill: red;
+}
+
+.zero {
+  fill: black;
+}
