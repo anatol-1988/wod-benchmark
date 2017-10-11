@@ -56,7 +56,7 @@ plotBenchmarks size result =
                 ( x, y ) =
                     plotFromPolar ( 30, 2.0 * pi * (toFloat n + 0.5) / 4 )
             in
-                circle
+                [ circle
                     [ cx (toString x)
                     , cy (toString y)
                     , r "80"
@@ -64,20 +64,24 @@ plotBenchmarks size result =
                     , class "diagram-circle"
                     ]
                     []
+                ]
+                    ++ (drawResult ( 140, 2.0 * pi * (toFloat n + 0.5) / 4 ) <|
+                            toString n
+                       )
 
-        drawResult ( r, theta, scoreId ) =
+        drawResult ( r, theta ) scoreId =
             let
                 ( centerX, centerY ) =
                     plotFromPolar ( r, theta )
 
                 ( nameX, nameY ) =
-                    plotFromPolar ( 15, pi / 2 )
+                    plotFromPolar ( r + 15, theta + pi / 2 )
 
                 ( scoreX, scoreY ) =
-                    plotFromPolar ( 0, 0 )
+                    plotFromPolar ( r, theta )
 
                 ( diffX, diffY ) =
-                    plotFromPolar ( 25, 0 )
+                    plotFromPolar ( r + 25, theta )
 
                 ( diffText, diffClass ) =
                     if result.diff > 0 then
@@ -123,7 +127,7 @@ plotBenchmarks size result =
                     ++ " "
                     ++ toString size.height
             ]
-            (List.map drawCircle (List.range 1 4)
+            (List.concatMap drawCircle (List.range 1 4)
                 ++ [ circle
                         [ cx (toString centerX)
                         , cy (toString centerY)
@@ -133,5 +137,5 @@ plotBenchmarks size result =
                         ]
                         []
                    ]
-                ++ drawResult ( 0, 0, "totalScore" )
+                ++ drawResult ( 0, 0 ) "totalScore"
             )
