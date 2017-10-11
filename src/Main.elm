@@ -10,7 +10,8 @@ import Wods exposing (Wod, WodType(..), normalize)
 import Date.Extra.Create exposing (timeFromFields)
 import Date exposing (toTime, fromTime)
 import Time exposing (Time)
-import Plot exposing (..)
+import Plot exposing (groups, group, viewBars)
+import Diagram exposing (plotBenchmarks)
 
 
 parseTime : String -> Maybe Time
@@ -171,6 +172,8 @@ view model =
                 ]
             , div [ class "row" ]
                 [ text <| "Power: " ++ (toString <| Wods.getPower model.wods) ]
+            , div [ class "row" ]
+                [ plotBenchmarks { width = 480, height = 480 } ]
             , div [ class "row" ]
                 [ viewBars
                     (groups (List.map (\data -> group data.label data.height)))

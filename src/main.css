@@ -10,3 +10,23 @@ img {
   margin: 20px 0;
   max-width: 200px;
 }
+
+#circle1 {
+  fill: yellow;
+}
+
+#circle2 {
+  fill: blue;
+}
+
+#circle3 {
+  fill: green;
+}
+
+#circle4 {
+  fill: magenta;
+}
+
+.diagram-circle {
+  opacity: 0.9;
+}
