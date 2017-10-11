@@ -12,21 +12,26 @@ img {
 }
 
 #circle1 {
-  fill: yellow;
+  fill: #3ba8af;
 }
 
 #circle2 {
-  fill: blue;
+  fill: #d33f8b;
 }
 
 #circle3 {
-  fill: green;
+  fill: #fddf1f;
 }
 
 #circle4 {
-  fill: magenta;
+  fill: #3d98d1;
+}
+
+#central {
+  fill: white;
+  opacity: 1.0;
 }
 
 .diagram-circle {
-  opacity: 0.9;
+  opacity: 0.95;
 }

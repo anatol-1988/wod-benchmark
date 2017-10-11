@@ -33,7 +33,7 @@ plotBenchmarks size =
         drawCircle n =
             let
                 ( x, y ) =
-                    plotFromPolar ( 50, 2.0 * pi * (toFloat n) / 4 )
+                    plotFromPolar ( 30, 2.0 * pi * (toFloat n + 0.5) / 4 )
             in
                 circle
                     [ cx (toString x)
@@ -53,5 +53,14 @@ plotBenchmarks size =
                     ++ " "
                     ++ toString size.height
             ]
-            -- circle [ cx (toString centerX), cy (toString centerY), r "60" ] []
-            (List.map drawCircle (List.range 1 4))
+            (List.map drawCircle (List.range 1 4)
+                ++ [ circle
+                        [ cx (toString centerX)
+                        , cy (toString centerY)
+                        , r "60"
+                        , id <| "central"
+                        , class "diagram-circle"
+                        ]
+                        []
+                   ]
+            )
