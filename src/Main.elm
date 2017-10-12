@@ -119,6 +119,7 @@ renderInputs wods =
                                     , Html.Attributes.id w.id
                                     , Html.Attributes.placeholder "mm:ss"
                                     , onInput (Slide w.id)
+                                    , Html.Attributes.class "validate"
                                     ]
                                     []
 
@@ -143,7 +144,7 @@ renderInputs wods =
                                     , onInput (Slide w.id)
                                     ]
                                     []
-                        , label [ Html.Attributes.for w.id ] [ text <| w.name ]
+                        , label [ Html.Attributes.for w.id, Html.Attributes.class "active" ] [ text <| w.name ]
                         ]
                     , Html.p [ Html.Attributes.class "flow-text" ]
                         [ text <|
@@ -174,45 +175,27 @@ view model =
                 [ text <| "Power: " ++ (toString <| Wods.getPower model.wods) ]
             , div [ class "row" ]
                 [ plotBenchmarks { width = 480, height = 480 }
-                    { name = "Fit Score", score = 74, diff = 5 }
-                    [ { name = "Cardio", score = 10, diff = 5 }
-                    , { name = "Endurance", score = 20, diff = -5 }
-                    , { name = "Power", score = 30, diff = -15 }
-                    , { name = "Weightlifting", score = 40, diff = 15 }
-                    , { name = "Weightlifting", score = 40, diff = 15 }
-                    ]
-                ]
-            , div [ class "row" ]
-                [ viewBars
-                    (groups (List.map (\data -> group data.label data.height)))
-                    [ { label = "Cardio"
-                      , height =
-                            [ toFloat <|
-                                Maybe.withDefault 0 <|
-                                    Wods.getCardio model.wods
-                            ]
+                    { name = "Fit Score", score = Maybe.withDefault 0 <| Wods.getTotalEstimation model.wods, diff = 5 }
+                    [ { name = "Cardio"
+                      , score =
+                            Maybe.withDefault 0 <|
+                                Wods.getCardio model.wods
+                      , diff = 5
                       }
-                    , { label = "Endurance"
-                      , height =
-                            [ toFloat <|
-                                Maybe.withDefault 0 <|
-                                    Wods.getEndurance model.wods
-                            ]
+                    , { name = "Endurance"
+                      , score =
+                            Maybe.withDefault 0 <|
+                                Wods.getEndurance model.wods
+                      , diff = -5
                       }
-                    , { label = "Power"
-                      , height =
-                            [ toFloat <|
-                                Maybe.withDefault 0 <|
-                                    Wods.getPower model.wods
-                            ]
+                    , { name = "Power"
+                      , score =
+                            Maybe.withDefault 0 <|
+                                Wods.getPower model.wods
+                      , diff = -15
                       }
                     ]
                 ]
-            ]
-        , div [ class "row" ]
-            [ text <|
-                "General Estimation: "
-                    ++ (toString <| Wods.getTotalEstimation model.wods)
             ]
         ]
 

@@ -92,7 +92,7 @@ plotBenchmarks size total results =
                     ( centerX, centerY + 15 )
 
                 ( diffX, diffY ) =
-                    ( centerX + 25, centerY )
+                    ( centerX + 23, centerY )
 
                 ( diffText, diffClass ) =
                     if res.diff > 0 then
