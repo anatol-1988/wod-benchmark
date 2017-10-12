@@ -11,6 +11,10 @@ img {
   max-width: 200px;
 }
 
+#circle0 {
+  fill: #3d98d1;
+}
+
 #circle1 {
   fill: #3ba8af;
 }
@@ -24,7 +28,7 @@ img {
 }
 
 #circle4 {
-  fill: #3d98d1;
+  fill: #4C6085
 }
 
 #central {

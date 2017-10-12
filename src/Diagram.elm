@@ -32,9 +32,12 @@ type alias Result =
     }
 
 
-plotBenchmarks : Size -> Result -> Html.Html msg
-plotBenchmarks size result =
+plotBenchmarks : Size -> Result -> List Result -> Html.Html msg
+plotBenchmarks size total results =
     let
+        numberOfResults =
+            List.length results
+
         centerX =
             size.width // 2
 
@@ -42,19 +45,26 @@ plotBenchmarks size result =
             size.height // 2
 
         plotToPolar ( x, y ) =
-            toPolar <| ( toFloat (x - centerX), toFloat (y - centerY) )
+            let
+                ( r, theta ) =
+                    toPolar <| ( toFloat (x - centerX), toFloat (y - centerY) )
+            in
+                ( r, theta + pi / 2 )
 
         plotFromPolar ( r, theta ) =
             let
                 ( x, y ) =
-                    fromPolar ( toFloat r, theta )
+                    fromPolar ( toFloat r, theta - pi / 2 )
             in
                 ( round x + centerX, round y + centerY )
 
-        drawCircle n =
+        drawCircle n res =
             let
                 ( x, y ) =
-                    plotFromPolar ( 30, 2.0 * pi * (toFloat n + 0.5) / 4 )
+                    plotFromPolar
+                        ( 30
+                        , 2.0 * pi * toFloat n / toFloat numberOfResults
+                        )
             in
                 [ circle
                     [ cx (toString x)
@@ -65,31 +75,32 @@ plotBenchmarks size result =
                     ]
                     []
                 ]
-                    ++ (drawResult ( 140, 2.0 * pi * (toFloat n + 0.5) / 4 ) <|
-                            toString n
+                    ++ (drawResult
+                            ( 165
+                            , 2.0 * pi * toFloat n / toFloat numberOfResults
+                            )
+                            (toString n)
+                            res
                        )
 
-        drawResult ( r, theta ) scoreId =
+        drawResult ( r, theta ) scoreId res =
             let
                 ( centerX, centerY ) =
                     plotFromPolar ( r, theta )
 
                 ( nameX, nameY ) =
-                    plotFromPolar ( r + 15, theta + pi / 2 )
-
-                ( scoreX, scoreY ) =
-                    plotFromPolar ( r, theta )
+                    ( centerX, centerY + 15 )
 
                 ( diffX, diffY ) =
-                    plotFromPolar ( r + 25, theta )
+                    ( centerX + 25, centerY )
 
                 ( diffText, diffClass ) =
-                    if result.diff > 0 then
-                        ( "+" ++ toString result.diff, "positive" )
-                    else if result.diff < 0 then
-                        ( "−" ++ toString result.diff, "negative" )
+                    if res.diff > 0 then
+                        ( "+" ++ toString res.diff, "positive" )
+                    else if res.diff < 0 then
+                        ( "−" ++ (toString <| abs res.diff), "negative" )
                     else
-                        ( toString result.diff, "zero" )
+                        ( toString res.diff, "zero" )
             in
                 [ text_
                     [ x (toString nameX)
@@ -98,16 +109,16 @@ plotBenchmarks size result =
                     , textAnchor "middle"
                     , class "result-title"
                     ]
-                    [ text result.name ]
+                    [ text res.name ]
                 , text_
-                    [ x (toString scoreX)
-                    , y (toString scoreY)
+                    [ x (toString centerX)
+                    , y (toString centerY)
                     , alignmentBaseline "middle"
                     , textAnchor "middle"
                     , class <| "result-score"
                     , id scoreId
                     ]
-                    [ text <| toString result.score ]
+                    [ text <| toString res.score ]
                 , text_
                     [ x (toString diffX)
                     , y (toString diffY)
@@ -127,7 +138,7 @@ plotBenchmarks size result =
                     ++ " "
                     ++ toString size.height
             ]
-            (List.concatMap drawCircle (List.range 1 4)
+            ((List.concat <| List.indexedMap drawCircle results)
                 ++ [ circle
                         [ cx (toString centerX)
                         , cy (toString centerY)
@@ -137,5 +148,5 @@ plotBenchmarks size result =
                         ]
                         []
                    ]
-                ++ drawResult ( 0, 0 ) "totalScore"
+                ++ drawResult ( 0, 0 ) "totalScore" total
             )
