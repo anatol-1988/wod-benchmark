@@ -6,7 +6,7 @@ module Wods
         , getCardio
         , getPower
         , getEndurance
-        , getTotalEstimation
+        , getTotal
         , normalize
         )
 
@@ -151,8 +151,8 @@ getEndurance wods =
     getFactor .endurance wods
 
 
-getTotalEstimation : List Wod -> Maybe Int
-getTotalEstimation wods =
+getTotal : List Wod -> Maybe Int
+getTotal wods =
     let
         getRoot cardio power endurance =
             round <| cubeRoot (toFloat <| cardio * power * endurance)

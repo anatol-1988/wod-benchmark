@@ -1,8 +1,9 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, img, input, ul, li, option, label, h3)
+import Html exposing (Html, text, div, img, input, ul, li, option, label, h3, a)
+import Html exposing (i)
 import Html.Attributes exposing (src, type_, min, max, value, class)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onInput, onClick)
 import List exposing (map)
 import String exposing (toInt)
 import Result exposing (withDefault)
@@ -37,12 +38,28 @@ parseTime str =
 
 
 type alias Model =
-    { wods : List Wod }
+    { wods : List Wod
+    , indicators :
+        { cardio : Maybe Int
+        , endurance : Maybe Int
+        , power : Maybe Int
+        , total : Maybe Int
+        }
+    }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { wods = Wods.wods }, Cmd.none )
+    ( { wods = Wods.wods
+      , indicators =
+            { cardio = Nothing
+            , endurance = Nothing
+            , power = Nothing
+            , total = Nothing
+            }
+      }
+    , Cmd.none
+    )
 
 
 
@@ -52,6 +69,7 @@ init =
 type Msg
     = NoOp
     | Slide String String
+    | CalcAll
 
 
 setWodValue : String -> String -> Wod -> Wod
@@ -95,6 +113,18 @@ update msg model =
                 ( { model | wods = map (setWodValue id value) model.wods }
                 , Cmd.none
                 )
+
+        CalcAll ->
+            ( { model
+                | indicators =
+                    { cardio = Wods.getCardio model.wods
+                    , endurance = Wods.getEndurance model.wods
+                    , power = Wods.getPower model.wods
+                    , total = Wods.getTotal model.wods
+                    }
+              }
+            , Cmd.none
+            )
 
         none ->
             ( model, Cmd.none )
@@ -171,45 +201,47 @@ view : Model -> Html Msg
 view model =
     div [ class "row" ]
         [ div [ class "col s12 m4" ] <|
-            [ h3 [] [ text "Calculated on previous benchmarks" ] ]
+            [ h3 [] [ text "Calculated on previous benchmarks" ]
+            , a [ class "waves-effect waves-light btn-large" ]
+                [ i [ class "material-icons right", onClick CalcAll ]
+                    [ text "cached" ]
+                , text "Update"
+                ]
+            ]
                 ++ (renderInputs model.wods)
         , div [ class "col s12 m4" ]
             [ div [ class "row" ]
                 [ text <|
                     "Cardio: "
-                        ++ (toString <| Wods.getCardio model.wods)
+                        ++ (toString model.indicators.cardio)
                 ]
             , div [ class "row" ]
                 [ text <|
                     "Endurance: "
-                        ++ (toString <| Wods.getEndurance model.wods)
+                        ++ (toString model.indicators.endurance)
                 ]
             , div [ class "row" ]
-                [ text <| "Power: " ++ (toString <| Wods.getPower model.wods) ]
+                [ text <| "Power: " ++ (toString model.indicators.power) ]
             , div [ class "row" ]
                 [ plotBenchmarks { width = 480, height = 480 }
                     { name = "Fit Score"
                     , score =
-                        Maybe.withDefault 0 <|
-                            Wods.getTotalEstimation model.wods
+                        Maybe.withDefault 0 model.indicators.total
                     , diff = 5
                     }
                     [ { name = "Cardio"
                       , score =
-                            Maybe.withDefault 0 <|
-                                Wods.getCardio model.wods
+                            Maybe.withDefault 0 model.indicators.cardio
                       , diff = 5
                       }
                     , { name = "Endurance"
                       , score =
-                            Maybe.withDefault 0 <|
-                                Wods.getEndurance model.wods
+                            Maybe.withDefault 0 model.indicators.endurance
                       , diff = -5
                       }
                     , { name = "Power"
                       , score =
-                            Maybe.withDefault 0 <|
-                                Wods.getPower model.wods
+                            Maybe.withDefault 0 model.indicators.power
                       , diff = -15
                       }
                     ]
