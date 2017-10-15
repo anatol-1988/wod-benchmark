@@ -70,3 +70,18 @@ img {
 .zero {
   fill: black;
 }
+
+.input-field.col .unit {
+  display:inline-block;
+  vertical-align: baseline;
+  left: 85%;
+  text-align: right;
+  color: red;
+  transition: none;
+  transform: none;
+}
+
+.input-field.col .unit.active {
+  transition: none;
+  transform: none;
+}
