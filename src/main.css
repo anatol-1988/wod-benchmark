@@ -73,10 +73,8 @@ img {
 
 .input-field.col .unit {
   display:inline-block;
-  vertical-align: baseline;
-  left: 85%;
+  right: 20px;
   text-align: right;
-  color: red;
   transition: none;
   transform: none;
 }

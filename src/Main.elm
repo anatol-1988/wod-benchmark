@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, img, input, ul, li, option, label)
+import Html exposing (Html, text, div, img, input, ul, li, option, label, h3)
 import Html.Attributes exposing (src, type_, min, max, value, class)
 import Html.Events exposing (onInput)
 import List exposing (map)
@@ -10,7 +10,6 @@ import Wods exposing (Wod, WodType(..), normalize)
 import Date.Extra.Create exposing (timeFromFields)
 import Date exposing (toTime, fromTime)
 import Time exposing (Time)
-import Plot exposing (groups, group, viewBars)
 import Diagram exposing (plotBenchmarks)
 
 
@@ -105,52 +104,65 @@ update msg model =
 ---- VIEW ----
 
 
+renderInput : Wod -> List (Html Msg)
+renderInput wod =
+    (case wod.range of
+        ForTime range ->
+            [ input
+                [ type_ "text"
+                , Html.Attributes.id wod.id
+                , onInput (Slide wod.id)
+                , Html.Attributes.class "validate"
+                ]
+                []
+            , label [ Html.Attributes.class "unit" ]
+                [ text <| "mm:ss" ]
+            ]
+
+        ForReps range ->
+            [ input
+                [ type_ "number"
+                , Html.Attributes.id wod.id
+                , Html.Attributes.min <| toString range.worst
+                , Html.Attributes.max <| toString range.best
+                , onInput (Slide wod.id)
+                , Html.Attributes.defaultValue <| toString range.best
+                ]
+                []
+            , label [ Html.Attributes.class "unit" ]
+                [ text <| "reps" ]
+            ]
+
+        PRInfo range ->
+            [ input
+                [ type_ "number"
+                , Html.Attributes.id wod.id
+                , Html.Attributes.min <| toString range.worst
+                , Html.Attributes.max <| toString range.best
+                , onInput (Slide wod.id)
+                , Html.Attributes.defaultValue <| toString range.best
+                ]
+                []
+            , label [ Html.Attributes.class "unit" ]
+                [ text <| "kg" ]
+            ]
+    )
+        ++ [ label
+                [ Html.Attributes.for wod.id
+                , Html.Attributes.class "active"
+                ]
+                [ text <| wod.name ]
+           ]
+
+
 renderInputs : List Wod -> List (Html Msg)
 renderInputs wods =
     wods
         |> List.map
             (\w ->
                 div [ Html.Attributes.class "row" ]
-                    [ div [ Html.Attributes.class "input-field col s6" ]
-                        [ case w.range of
-                            ForTime range ->
-                                input
-                                    [ type_ "text"
-                                    , Html.Attributes.id w.id
-                                    , Html.Attributes.placeholder "mm:ss"
-                                    , onInput (Slide w.id)
-                                    , Html.Attributes.class "validate"
-                                    ]
-                                    []
-
-                            ForReps range ->
-                                input
-                                    [ type_ "number"
-                                    , Html.Attributes.id w.id
-                                    , Html.Attributes.min <| toString range.worst
-                                    , Html.Attributes.max <| toString range.best
-                                    , Html.Attributes.placeholder "reps"
-                                    , onInput (Slide w.id)
-                                    ]
-                                    []
-
-                            PRInfo range ->
-                                input
-                                    [ type_ "number"
-                                    , Html.Attributes.id w.id
-                                    , Html.Attributes.min <| toString range.worst
-                                    , Html.Attributes.max <| toString range.best
-                                    , Html.Attributes.placeholder "kg"
-                                    , onInput (Slide w.id)
-                                    ]
-                                    []
-                        , label [ Html.Attributes.for w.id, Html.Attributes.class "active" ] [ text <| w.name ]
-                        ]
-                    , Html.p [ Html.Attributes.class "flow-text" ]
-                        [ text <|
-                            "Normalized: "
-                                ++ (toString <| Wods.normalize w.range)
-                        ]
+                    [ div [ Html.Attributes.class "input-field" ] <|
+                        renderInput w
                     ]
             )
 
@@ -158,9 +170,10 @@ renderInputs wods =
 view : Model -> Html Msg
 view model =
     div [ class "row" ]
-        [ div [ class "col s6" ]
-            (renderInputs model.wods)
-        , div [ class "col s6" ]
+        [ div [ class "col s12 m4" ] <|
+            [ h3 [] [ text "Calculated on previous benchmarks" ] ]
+                ++ (renderInputs model.wods)
+        , div [ class "col s12 m4" ]
             [ div [ class "row" ]
                 [ text <|
                     "Cardio: "
@@ -175,7 +188,12 @@ view model =
                 [ text <| "Power: " ++ (toString <| Wods.getPower model.wods) ]
             , div [ class "row" ]
                 [ plotBenchmarks { width = 480, height = 480 }
-                    { name = "Fit Score", score = Maybe.withDefault 0 <| Wods.getTotalEstimation model.wods, diff = 5 }
+                    { name = "Fit Score"
+                    , score =
+                        Maybe.withDefault 0 <|
+                            Wods.getTotalEstimation model.wods
+                    , diff = 5
+                    }
                     [ { name = "Cardio"
                       , score =
                             Maybe.withDefault 0 <|
@@ -197,6 +215,8 @@ view model =
                     ]
                 ]
             ]
+        , div [ class "col s12 m4" ]
+            [ text "Empty" ]
         ]
 
 
