@@ -1,8 +1,8 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, img, input, ul, li, option, label, h3, a)
-import Html exposing (i, button)
-import Html.Attributes exposing (src, type_, min, max, value, class, id)
+import Html exposing (Html, text, div, img, input, ul, li, option, label, h3, h4)
+import Html exposing (i, button, span, p, a)
+import Html.Attributes exposing (src, type_, min, max, value, class, id, href)
 import Html.Events exposing (onInput, onClick, onMouseDown)
 import List exposing (map)
 import String exposing (toInt)
@@ -200,7 +200,7 @@ renderInputs wods =
 view : Model -> Html Msg
 view model =
     div [ class "row" ]
-        [ div [ class "col s12 m4" ] <|
+        [ div [ class "col s12 m3" ] <|
             [ h3 [] [ text "Calculated on previous benchmarks" ]
             , button
                 [ class "waves-effect waves-light btn-large"
@@ -213,21 +213,11 @@ view model =
                 ]
             ]
                 ++ (renderInputs model.wods)
-        , div [ class "col s12 m4" ]
+        , div [ class "col s12 m5" ]
             [ div [ class "row" ]
-                [ text <|
-                    "Cardio: "
-                        ++ (toString model.indicators.cardio)
-                ]
-            , div [ class "row" ]
-                [ text <|
-                    "Endurance: "
-                        ++ (toString model.indicators.endurance)
-                ]
-            , div [ class "row" ]
-                [ text <| "Power: " ++ (toString model.indicators.power) ]
-            , div [ class "row" ]
-                [ plotBenchmarks { width = 480, height = 480 }
+                [ h3 [] [ text "Your scores" ]
+                , h4 [] [ text "For today" ]
+                , plotBenchmarks { width = 480, height = 480 }
                     { name = "Fit Score"
                     , score =
                         Maybe.withDefault 0 model.indicators.total
@@ -252,7 +242,37 @@ view model =
                 ]
             ]
         , div [ class "col s12 m4" ]
-            [ text "Empty" ]
+            [ div [ class "card blue-grey darken-1" ]
+                [ div [ class "card-content white-text" ]
+                    [ span [ class "card-title" ] [ text "Card Title" ]
+                    , p [] [ text "I am a very simple card. I am good at containing small bits of information.\n              I am convenient because I require little markup to use effectively." ]
+                    ]
+                , div [ class "card-action" ]
+                    [ a [ href "#" ] [ text "This is a link" ]
+                    , a [ href "#" ] [ text "This is a link" ]
+                    ]
+                ]
+            , div [ class "card blue-grey darken-1" ]
+                [ div [ class "card-content white-text" ]
+                    [ span [ class "card-title" ] [ text "Card Title" ]
+                    , p [] [ text "I am a very simple card. I am good at containing small bits of information.\n              I am convenient because I require little markup to use effectively." ]
+                    ]
+                , div [ class "card-action" ]
+                    [ a [ href "#" ] [ text "This is a link" ]
+                    , a [ href "#" ] [ text "This is a link" ]
+                    ]
+                ]
+            , div [ class "card blue-grey darken-1" ]
+                [ div [ class "card-content white-text" ]
+                    [ span [ class "card-title" ] [ text "Card Title" ]
+                    , p [] [ text "I am a very simple card. I am good at containing small bits of information.\n              I am convenient because I require little markup to use effectively." ]
+                    ]
+                , div [ class "card-action" ]
+                    [ a [ href "#" ] [ text "This is a link" ]
+                    , a [ href "#" ] [ text "This is a link" ]
+                    ]
+                ]
+            ]
         ]
 
 

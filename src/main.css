@@ -1,6 +1,5 @@
 body {
   font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
-  font-size: 30px;
   margin: 0;
   text-align: center;
   color: #293c4b;
@@ -41,12 +40,12 @@ img {
 }
 
 .result-title {
-  font-size: 0.4em;
+  font-size: 1em;
   font-family: "Roboto";
 }
 
 .result-score {
-  font-size: 1.3em;
+  font-size: 2.5em;
   font-family: "Roboto";
 }
 
@@ -55,7 +54,7 @@ img {
 }
 
 .result-diff {
-  font-size: 0.5em;
+  font-size: 1em;
   font-family: "Roboto";
 }
 
@@ -72,7 +71,7 @@ img {
 }
 
 .input-field.col .unit {
-  display:inline-block;
+  display: inline-block;
   right: 20px;
   text-align: right;
   transition: none;
