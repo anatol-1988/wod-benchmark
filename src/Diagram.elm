@@ -1,21 +1,8 @@
 module Diagram exposing (plotBenchmarks, Size)
 
 import Svg exposing (circle, svg, text_, text)
-import Svg.Attributes
-    exposing
-        ( cx
-        , cy
-        , x
-        , y
-        , r
-        , viewBox
-        , height
-        , width
-        , class
-        , id
-        , alignmentBaseline
-        , textAnchor
-        )
+import Svg.Attributes exposing (cx, cy, x, y, r, viewBox, height, width)
+import Svg.Attributes exposing (class, id, alignmentBaseline, textAnchor)
 import Html exposing (Html)
 
 

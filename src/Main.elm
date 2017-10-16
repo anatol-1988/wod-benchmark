@@ -1,9 +1,9 @@
 module Main exposing (..)
 
 import Html exposing (Html, text, div, img, input, ul, li, option, label, h3, a)
-import Html exposing (i)
-import Html.Attributes exposing (src, type_, min, max, value, class)
-import Html.Events exposing (onInput, onClick)
+import Html exposing (i, button)
+import Html.Attributes exposing (src, type_, min, max, value, class, id)
+import Html.Events exposing (onInput, onClick, onMouseDown)
 import List exposing (map)
 import String exposing (toInt)
 import Result exposing (withDefault)
@@ -202,8 +202,12 @@ view model =
     div [ class "row" ]
         [ div [ class "col s12 m4" ] <|
             [ h3 [] [ text "Calculated on previous benchmarks" ]
-            , a [ class "waves-effect waves-light btn-large" ]
-                [ i [ class "material-icons right", onClick CalcAll ]
+            , button
+                [ class "waves-effect waves-light btn-large"
+                , id "update"
+                , onClick CalcAll
+                ]
+                [ i [ class "material-icons right" ]
                     [ text "cached" ]
                 , text "Update"
                 ]
