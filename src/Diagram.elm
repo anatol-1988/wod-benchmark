@@ -117,9 +117,7 @@ plotBenchmarks size total results =
                 ]
     in
         svg
-            [ width (toString size.width)
-            , height (toString size.height)
-            , viewBox <|
+            [ viewBox <|
                 "0 0 "
                     ++ toString size.width
                     ++ " "
