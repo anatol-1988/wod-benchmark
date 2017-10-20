@@ -12,6 +12,7 @@ import Date.Extra.Create exposing (timeFromFields)
 import Date exposing (toTime, fromTime)
 import Time exposing (Time)
 import Diagram exposing (plotBenchmarks)
+import Markdown exposing (toHtml)
 
 
 parseTime : String -> Maybe Time
@@ -213,7 +214,7 @@ view model =
                 ]
             ]
                 ++ (renderInputs model.wods)
-        , div [ class "col s12 m5" ]
+        , div [ class "col s12 m6" ]
             [ div [ class "row" ]
                 [ h3 [] [ text "Your scores" ]
                 , h4 [] [ text "For today" ]
@@ -241,35 +242,35 @@ view model =
                     ]
                 ]
             ]
-        , div [ class "col s12 m4" ]
-            [ div [ class "card blue-grey darken-1" ]
-                [ div [ class "card-content white-text" ]
-                    [ span [ class "card-title" ] [ text "Card Title" ]
-                    , p [] [ text "I am a very simple card. I am good at containing small bits of information.\n              I am convenient because I require little markup to use effectively." ]
+        , div [ class "col s12 m3" ]
+            [ div [ class "row" ]
+                [ div [ class "card blue darken-4" ]
+                    [ div [ class "card-content white-text" ]
+                        [ toHtml []
+                            """Your FitScore is 74 and you improved what is OK.
+                               **We know how to move you further**"""
+                        ]
+                    , div [ class "card-action" ]
+                        [ a [ href "#" ] [ text "Learn More" ] ]
                     ]
-                , div [ class "card-action" ]
-                    [ a [ href "#" ] [ text "This is a link" ]
-                    , a [ href "#" ] [ text "This is a link" ]
+                , div [ class "card grey lighten-5" ]
+                    [ div [ class "card-content" ]
+                        [ toHtml []
+                            """**41 points for weightlifting** means you have
+                            to do more here. We recommend you to focus on
+                            Cleans & Squats technique, then increase weight"""
+                        ]
+                    , div [ class "card-action" ]
+                        [ a [ href "#" ] [ text "Got it" ] ]
                     ]
-                ]
-            , div [ class "card blue-grey darken-1" ]
-                [ div [ class "card-content white-text" ]
-                    [ span [ class "card-title" ] [ text "Card Title" ]
-                    , p [] [ text "I am a very simple card. I am good at containing small bits of information.\n              I am convenient because I require little markup to use effectively." ]
-                    ]
-                , div [ class "card-action" ]
-                    [ a [ href "#" ] [ text "This is a link" ]
-                    , a [ href "#" ] [ text "This is a link" ]
-                    ]
-                ]
-            , div [ class "card blue-grey darken-1" ]
-                [ div [ class "card-content white-text" ]
-                    [ span [ class "card-title" ] [ text "Card Title" ]
-                    , p [] [ text "I am a very simple card. I am good at containing small bits of information.\n              I am convenient because I require little markup to use effectively." ]
-                    ]
-                , div [ class "card-action" ]
-                    [ a [ href "#" ] [ text "This is a link" ]
-                    , a [ href "#" ] [ text "This is a link" ]
+                , div [ class "card grey lighten-5" ]
+                    [ div [ class "card-content" ]
+                        [ toHtml []
+                            """**You're doing great,** but you have at least
+                            **2 areas** need your attention"""
+                        ]
+                    , div [ class "card-action" ]
+                        [ a [ href "#" ] [ text "Got it" ] ]
                     ]
                 ]
             ]
