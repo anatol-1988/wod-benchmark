@@ -15,7 +15,7 @@ type alias Size =
 type alias Result =
     { name : String
     , score : Int
-    , diff : Int
+    , diff : Maybe Int
     }
 
 
@@ -82,12 +82,17 @@ plotBenchmarks size total results =
                     ( centerX + 23, centerY )
 
                 ( diffText, diffClass ) =
-                    if res.diff > 0 then
-                        ( "+" ++ toString res.diff, "positive" )
-                    else if res.diff < 0 then
-                        ( "−" ++ (toString <| abs res.diff), "negative" )
-                    else
-                        ( toString res.diff, "zero" )
+                    case res.diff of
+                        Just n ->
+                            if n > 0 then
+                                ( "+" ++ toString n, "positive" )
+                            else if n < 0 then
+                                ( "−" ++ (toString <| abs n), "negative" )
+                            else
+                                ( toString 0, "zero" )
+
+                        Nothing ->
+                            ( toString 0, "zero" )
             in
                 [ text_
                     [ x (toString nameX)

@@ -38,14 +38,18 @@ parseTime str =
 ---- MODEL ----
 
 
+type alias Indicators =
+    { cardio : Maybe Int
+    , endurance : Maybe Int
+    , power : Maybe Int
+    , total : Maybe Int
+    }
+
+
 type alias Model =
     { wods : List Wod
-    , indicators :
-        { cardio : Maybe Int
-        , endurance : Maybe Int
-        , power : Maybe Int
-        , total : Maybe Int
-        }
+    , indicators : Indicators
+    , indicators_ : Indicators
     }
 
 
@@ -53,6 +57,12 @@ init : ( Model, Cmd Msg )
 init =
     ( { wods = Wods.wods
       , indicators =
+            { cardio = Nothing
+            , endurance = Nothing
+            , power = Nothing
+            , total = Nothing
+            }
+      , indicators_ =
             { cardio = Nothing
             , endurance = Nothing
             , power = Nothing
@@ -117,7 +127,8 @@ update msg model =
 
         CalcAll ->
             ( { model
-                | indicators =
+                | indicators_ = model.indicators
+                , indicators =
                     { cardio = Wods.getCardio model.wods
                     , endurance = Wods.getEndurance model.wods
                     , power = Wods.getPower model.wods
@@ -146,7 +157,7 @@ renderInput wod =
                 , Html.Attributes.class "validate"
                 ]
                 []
-            , label [ Html.Attributes.class "unit" ]
+            , span [ Html.Attributes.class "unit" ]
                 [ text <| "mm:ss" ]
             ]
 
@@ -157,10 +168,9 @@ renderInput wod =
                 , Html.Attributes.min <| toString range.worst
                 , Html.Attributes.max <| toString range.best
                 , onInput (Slide wod.id)
-                , Html.Attributes.defaultValue <| toString range.best
                 ]
                 []
-            , label [ Html.Attributes.class "unit" ]
+            , span [ Html.Attributes.class "unit" ]
                 [ text <| "reps" ]
             ]
 
@@ -171,10 +181,9 @@ renderInput wod =
                 , Html.Attributes.min <| toString range.worst
                 , Html.Attributes.max <| toString range.best
                 , onInput (Slide wod.id)
-                , Html.Attributes.defaultValue <| toString range.best
                 ]
                 []
-            , label [ Html.Attributes.class "unit" ]
+            , span [ Html.Attributes.class "unit" ]
                 [ text <| "kg" ]
             ]
     )
@@ -222,22 +231,30 @@ view model =
                     { name = "Fit Score"
                     , score =
                         Maybe.withDefault 0 model.indicators.total
-                    , diff = 5
+                    , diff =
+                        Maybe.map2 (-) model.indicators.total <|
+                            model.indicators_.total
                     }
                     [ { name = "Cardio"
                       , score =
                             Maybe.withDefault 0 model.indicators.cardio
-                      , diff = 5
+                      , diff =
+                            Maybe.map2 (-) model.indicators.cardio <|
+                                model.indicators_.cardio
                       }
                     , { name = "Endurance"
                       , score =
                             Maybe.withDefault 0 model.indicators.endurance
-                      , diff = -5
+                      , diff =
+                            Maybe.map2 (-) model.indicators.endurance <|
+                                model.indicators_.endurance
                       }
                     , { name = "Power"
                       , score =
                             Maybe.withDefault 0 model.indicators.power
-                      , diff = -15
+                      , diff =
+                            Maybe.map2 (-) model.indicators.power <|
+                                model.indicators_.power
                       }
                     ]
                 ]
