@@ -34,7 +34,7 @@ plotBenchmarks size total results =
         plotToPolar ( x, y ) =
             let
                 ( r, theta ) =
-                    toPolar <| ( toFloat (x - centerX), toFloat (y - centerY) )
+                    toPolar ( toFloat (x - centerX), toFloat (y - centerY) )
             in
                 ( r, theta + pi / 2 )
 
@@ -118,7 +118,7 @@ plotBenchmarks size total results =
                     , textAnchor "start"
                     , class <| "result-diff " ++ diffClass
                     ]
-                    [ text <| diffText ]
+                    [ text diffText ]
                 ]
     in
         svg
@@ -133,7 +133,7 @@ plotBenchmarks size total results =
                         [ cx (toString centerX)
                         , cy (toString centerY)
                         , r "60"
-                        , id <| "central"
+                        , id "central"
                         , class "diagram-circle"
                         ]
                         []

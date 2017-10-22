@@ -13,6 +13,7 @@ import Date exposing (toTime, fromTime)
 import Time exposing (Time)
 import Diagram exposing (plotBenchmarks)
 import Markdown exposing (toHtml)
+import Platform exposing (Task)
 
 
 parseTime : String -> Maybe Time
@@ -116,17 +117,12 @@ setWodValue id value wod =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Slide id v ->
-            let
-                value =
-                    v
-            in
-                ( { model | wods = map (setWodValue id value) model.wods }
-                , Cmd.none
-                )
+        Slide id value ->
+            { model | wods = map (setWodValue id value) model.wods }
+                ! []
 
         CalcAll ->
-            ( { model
+            { model
                 | indicators_ = model.indicators
                 , indicators =
                     { cardio = Wods.getCardio model.wods
@@ -134,12 +130,11 @@ update msg model =
                     , power = Wods.getPower model.wods
                     , total = Wods.getTotal model.wods
                     }
-              }
-            , Cmd.none
-            )
+            }
+                ! []
 
         none ->
-            ( model, Cmd.none )
+            model ! []
 
 
 
@@ -158,7 +153,7 @@ renderInput wod =
                 ]
                 []
             , span [ Html.Attributes.class "unit" ]
-                [ text <| "mm:ss" ]
+                [ text "mm:ss" ]
             ]
 
         ForReps range ->
@@ -171,7 +166,7 @@ renderInput wod =
                 ]
                 []
             , span [ Html.Attributes.class "unit" ]
-                [ text <| "reps" ]
+                [ text "reps" ]
             ]
 
         PRInfo range ->
@@ -184,14 +179,14 @@ renderInput wod =
                 ]
                 []
             , span [ Html.Attributes.class "unit" ]
-                [ text <| "kg" ]
+                [ text "kg" ]
             ]
     )
         ++ [ label
                 [ Html.Attributes.for wod.id
                 , Html.Attributes.class "active"
                 ]
-                [ text <| wod.name ]
+                [ text wod.name ]
            ]
 
 
@@ -232,28 +227,32 @@ view model =
                     , score =
                         Maybe.withDefault 0 model.indicators.total
                     , diff =
-                        Maybe.map2 (-) model.indicators.total <|
+                        Maybe.map2 (-)
+                            model.indicators.total
                             model.indicators_.total
                     }
                     [ { name = "Cardio"
                       , score =
                             Maybe.withDefault 0 model.indicators.cardio
                       , diff =
-                            Maybe.map2 (-) model.indicators.cardio <|
+                            Maybe.map2 (-)
+                                model.indicators.cardio
                                 model.indicators_.cardio
                       }
                     , { name = "Endurance"
                       , score =
                             Maybe.withDefault 0 model.indicators.endurance
                       , diff =
-                            Maybe.map2 (-) model.indicators.endurance <|
+                            Maybe.map2 (-)
+                                model.indicators.endurance
                                 model.indicators_.endurance
                       }
                     , { name = "Power"
                       , score =
                             Maybe.withDefault 0 model.indicators.power
                       , diff =
-                            Maybe.map2 (-) model.indicators.power <|
+                            Maybe.map2 (-)
+                                model.indicators.power
                                 model.indicators_.power
                       }
                     ]
