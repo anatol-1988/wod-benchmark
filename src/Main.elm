@@ -14,6 +14,7 @@ import Time exposing (Time)
 import Diagram exposing (plotBenchmarks)
 import Markdown exposing (toHtml)
 import Platform exposing (Task)
+import Storage exposing (getWods)
 
 
 parseTime : String -> Maybe Time
