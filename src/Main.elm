@@ -89,42 +89,42 @@ type Msg
     | GetWods (List ( String, String ))
 
 
-setWodValue : String -> String -> Wod -> Wod
-setWodValue id value wod =
-    case wod.range of
-        ForTime range ->
-            if wod.id == id then
-                { wod | range = ForTime { range | value = parseTime value } }
-            else
-                { wod | range = ForTime { range | value = range.value } }
+setWodValue : String -> String -> List Wod -> List Wod
+setWodValue id value wods =
+    let
+        setWod wod =
+            { wod
+                | range =
+                    if wod.id == id then
+                        case wod.range of
+                            ForTime range ->
+                                ForTime { range | value = parseTime value }
 
-        ForReps range ->
-            if wod.id == id then
-                { wod
-                    | range =
-                        ForReps
-                            { range | value = Result.toMaybe <| toInt value }
-                }
-            else
-                { wod | range = ForReps { range | value = range.value } }
+                            ForReps range ->
+                                ForReps
+                                    { range
+                                        | value =
+                                            Result.toMaybe <| toInt value
+                                    }
 
-        PRInfo range ->
-            if wod.id == id then
-                { wod
-                    | range =
-                        PRInfo
-                            { range | value = Result.toMaybe <| toInt value }
-                }
-            else
-                { wod | range = PRInfo { range | value = range.value } }
+                            PRInfo range ->
+                                PRInfo
+                                    { range
+                                        | value =
+                                            Result.toMaybe <| toInt value
+                                    }
+                    else
+                        wod.range
+            }
+    in
+        map setWod wods
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Slide id value ->
-            { model | wods = map (setWodValue id value) model.wods }
-                ! []
+            { model | wods = setWodValue id value model.wods } ! []
 
         CalcAll ->
             { model
@@ -139,10 +139,7 @@ update msg model =
                 ! []
 
         GetWods wods ->
-            { model
-                | savedValues = Dict.fromList wods
-            }
-                ! []
+            model ! []
 
         none ->
             model ! []
