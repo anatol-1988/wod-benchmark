@@ -4,7 +4,7 @@ import Html exposing (Html, text, div, img, input, ul, li, option, label, h3, h4
 import Html exposing (i, button, span, p, a)
 import Html.Attributes exposing (src, type_, min, max, value, class, id, href)
 import Html.Events exposing (onInput, onClick, onMouseDown)
-import List exposing (map)
+import List exposing (map, map2)
 import String exposing (toInt)
 import Result exposing (withDefault)
 import Wods exposing (Wod, WodType(..), normalize)
@@ -15,6 +15,7 @@ import Diagram exposing (plotBenchmarks)
 import Markdown exposing (toHtml)
 import Platform exposing (Task)
 import Storage exposing (getWods)
+import Dict exposing (Dict, empty)
 
 
 parseTime : String -> Maybe Time
@@ -52,6 +53,7 @@ type alias Model =
     { wods : List Wod
     , indicators : Indicators
     , indicators_ : Indicators
+    , savedValues : Dict String String
     }
 
 
@@ -70,6 +72,7 @@ init =
             , power = Nothing
             , total = Nothing
             }
+      , savedValues = Dict.empty
       }
     , Cmd.none
     )
@@ -83,6 +86,7 @@ type Msg
     = NoOp
     | Slide String String
     | CalcAll
+    | GetWods (List ( String, String ))
 
 
 setWodValue : String -> String -> Wod -> Wod
@@ -134,6 +138,12 @@ update msg model =
             }
                 ! []
 
+        GetWods wods ->
+            { model
+                | savedValues = Dict.fromList wods
+            }
+                ! []
+
         none ->
             model ! []
 
@@ -142,8 +152,8 @@ update msg model =
 ---- VIEW ----
 
 
-renderInput : Wod -> List (Html Msg)
-renderInput wod =
+renderInput : Wod -> Maybe String -> List (Html Msg)
+renderInput wod value =
     (case wod.range of
         ForTime range ->
             [ input
@@ -151,6 +161,7 @@ renderInput wod =
                 , Html.Attributes.id wod.id
                 , onInput (Slide wod.id)
                 , Html.Attributes.class "validate"
+                , Html.Attributes.value <| Maybe.withDefault "" value
                 ]
                 []
             , span [ Html.Attributes.class "unit" ]
@@ -191,14 +202,15 @@ renderInput wod =
            ]
 
 
-renderInputs : List Wod -> List (Html Msg)
-renderInputs wods =
-    wods
+renderInputs : Model -> List (Html Msg)
+renderInputs model =
+    model.wods
         |> List.map
             (\w ->
                 div [ Html.Attributes.class "row" ]
                     [ div [ Html.Attributes.class "input-field" ] <|
-                        renderInput w
+                        renderInput w <|
+                            Dict.get w.id model.savedValues
                     ]
             )
 
@@ -218,7 +230,7 @@ view model =
                 , text "Update"
                 ]
             ]
-                ++ (renderInputs model.wods)
+                ++ (renderInputs model)
         , div [ class "col s12 m6" ]
             [ div [ class "row" ]
                 [ h3 [] [ text "Your scores" ]
@@ -260,42 +272,50 @@ view model =
                 ]
             ]
         , div [ class "col s12 m3" ]
-            [ div [ class "row" ]
-                [ div [ class "card blue darken-4" ]
-                    [ div [ class "card-content white-text" ]
-                        [ toHtml []
-                            """Your FitScore is 74 and you improved what is OK.
+            [ div [ class "row" ] viewCards ]
+        ]
+
+
+viewCards : List (Html msg)
+viewCards =
+    [ div [ class "card blue darken-4" ]
+        [ div [ class "card-content white-text" ]
+            [ toHtml []
+                """Your FitScore is 74 and you improved what is OK.
                                **We know how to move you further**"""
-                        ]
-                    , div [ class "card-action" ]
-                        [ a [ href "#" ] [ text "Learn More" ] ]
-                    ]
-                , div [ class "card grey lighten-5" ]
-                    [ div [ class "card-content" ]
-                        [ toHtml []
-                            """**41 points for weightlifting** means you have
+            ]
+        , div [ class "card-action" ]
+            [ a [ href "#" ] [ text "Learn More" ] ]
+        ]
+    , div [ class "card grey lighten-5" ]
+        [ div [ class "card-content" ]
+            [ toHtml []
+                """**41 points for weightlifting** means you have
                             to do more here. We recommend you to focus on
                             Cleans & Squats technique, then increase weight"""
-                        ]
-                    , div [ class "card-action" ]
-                        [ a [ href "#" ] [ text "Got it" ] ]
-                    ]
-                , div [ class "card grey lighten-5" ]
-                    [ div [ class "card-content" ]
-                        [ toHtml []
-                            """**You're doing great,** but you have at least
-                            **2 areas** need your attention"""
-                        ]
-                    , div [ class "card-action" ]
-                        [ a [ href "#" ] [ text "Got it" ] ]
-                    ]
-                ]
             ]
+        , div [ class "card-action" ]
+            [ a [ href "#" ] [ text "Got it" ] ]
         ]
+    , div [ class "card grey lighten-5" ]
+        [ div [ class "card-content" ]
+            [ toHtml []
+                """**You're doing great,** but you have at least
+                            **2 areas** need your attention"""
+            ]
+        , div [ class "card-action" ]
+            [ a [ href "#" ] [ text "Got it" ] ]
+        ]
+    ]
 
 
 
 ---- PROGRAM ----
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    getWods GetWods
 
 
 main : Program Never Model Msg
@@ -304,5 +324,5 @@ main =
         { view = view
         , init = init
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }

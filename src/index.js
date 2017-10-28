@@ -14,6 +14,6 @@ import registerServiceWorker from './registerServiceWorker';
 
 var myapp = Main.embed(document.getElementById('root'));
 
-myapp.ports.getWods.send([["fran", "2:35"]]);
+myapp.ports.getWods.send([["frn", "2:35"], ["mrh", "20:42"]]);
 
 registerServiceWorker();
