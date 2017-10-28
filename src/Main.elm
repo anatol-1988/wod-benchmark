@@ -152,54 +152,65 @@ update msg model =
 ---- VIEW ----
 
 
-renderInput : Wod -> Maybe String -> List (Html Msg)
+renderInput : Wod -> Maybe String -> Html Msg
 renderInput wod value =
-    (case wod.range of
-        ForTime range ->
-            [ input
-                [ type_ "text"
-                , Html.Attributes.id wod.id
-                , onInput (Slide wod.id)
-                , Html.Attributes.class "validate"
-                , Html.Attributes.value <| Maybe.withDefault "" value
-                ]
-                []
-            , span [ Html.Attributes.class "unit" ]
-                [ text "mm:ss" ]
-            ]
+    div [ class "col s12" ]
+        [ (div [ Html.Attributes.class "input-field" ] <|
+            (case wod.range of
+                ForTime range ->
+                    [ input
+                        [ type_ "text"
+                        , Html.Attributes.id wod.id
+                        , onInput (Slide wod.id)
+                        , Html.Attributes.class "validate"
+                        , Html.Attributes.value <| Maybe.withDefault "" value
+                        ]
+                        []
+                    ]
 
-        ForReps range ->
-            [ input
-                [ type_ "number"
-                , Html.Attributes.id wod.id
-                , Html.Attributes.min <| toString range.worst
-                , Html.Attributes.max <| toString range.best
-                , onInput (Slide wod.id)
-                ]
-                []
-            , span [ Html.Attributes.class "unit" ]
-                [ text "reps" ]
-            ]
+                ForReps range ->
+                    [ input
+                        [ type_ "number"
+                        , Html.Attributes.id wod.id
+                        , Html.Attributes.min <| toString range.worst
+                        , Html.Attributes.max <| toString range.best
+                        , onInput (Slide wod.id)
+                        ]
+                        []
+                    ]
 
-        PRInfo range ->
-            [ input
-                [ type_ "number"
-                , Html.Attributes.id wod.id
-                , Html.Attributes.min <| toString range.worst
-                , Html.Attributes.max <| toString range.best
-                , onInput (Slide wod.id)
-                ]
-                []
-            , span [ Html.Attributes.class "unit" ]
-                [ text "kg" ]
-            ]
-    )
-        ++ [ label
-                [ Html.Attributes.for wod.id
-                , Html.Attributes.class "active"
-                ]
-                [ text wod.name ]
-           ]
+                PRInfo range ->
+                    [ input
+                        [ type_ "number"
+                        , Html.Attributes.id wod.id
+                        , Html.Attributes.min <| toString range.worst
+                        , Html.Attributes.max <| toString range.best
+                        , onInput (Slide wod.id)
+                        ]
+                        []
+                    ]
+            )
+                ++ [ label
+                        [ Html.Attributes.for wod.id
+                        , Html.Attributes.class "active"
+                        ]
+                        [ text wod.name ]
+                   , span [ class "unit" ]
+                        [ text
+                            (case wod.range of
+                                ForTime range ->
+                                    "mm:ss"
+
+                                PRInfo range ->
+                                    "kg"
+
+                                ForReps range ->
+                                    "reps"
+                            )
+                        ]
+                   ]
+          )
+        ]
 
 
 renderInputs : Model -> List (Html Msg)
@@ -208,10 +219,7 @@ renderInputs model =
         |> List.map
             (\w ->
                 div [ Html.Attributes.class "row" ]
-                    [ div [ Html.Attributes.class "input-field" ] <|
-                        renderInput w <|
-                            Dict.get w.id model.savedValues
-                    ]
+                    [ renderInput w <| Dict.get w.id model.savedValues ]
             )
 
 
@@ -230,7 +238,7 @@ view model =
                 , text "Update"
                 ]
             ]
-                ++ (renderInputs model)
+                ++ renderInputs model
         , div [ class "col s12 m6" ]
             [ div [ class "row" ]
                 [ h3 [] [ text "Your scores" ]

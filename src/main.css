@@ -82,3 +82,11 @@ img {
   transition: none;
   transform: none;
 }
+
+.unit {
+  position: absolute;
+  right: 0px;
+  bottom: 30px;
+  color: #9e9e9e;
+  user-select: none;
+}
