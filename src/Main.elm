@@ -11,7 +11,7 @@ import Wods exposing (Wod, WodType(..), normalize)
 import Date.Extra.Create exposing (timeFromFields)
 import Date exposing (toTime, fromTime)
 import Time exposing (Time)
-import Diagram exposing (plotBenchmarks)
+import Diagram exposing (plotBenchmarks, Indicator)
 import Markdown exposing (toHtml)
 import Platform exposing (Task)
 import Storage exposing (getWods)
@@ -236,44 +236,34 @@ view model =
                 [ h3 [] [ text "Your scores" ]
                 , h4 [] [ text "For today" ]
                 , plotBenchmarks { width = 480, height = 480 }
-                    { name = "Fit Score"
-                    , score =
-                        Maybe.withDefault 0 model.indicators.total
-                    , diff =
-                        Maybe.map2 (-)
-                            model.indicators.total
-                            model.indicators_.total
-                    }
-                    [ { name = "Cardio"
-                      , score =
-                            Maybe.withDefault 0 model.indicators.cardio
-                      , diff =
-                            Maybe.map2 (-)
-                                model.indicators.cardio
-                                model.indicators_.cardio
-                      }
-                    , { name = "Endurance"
-                      , score =
-                            Maybe.withDefault 0 model.indicators.endurance
-                      , diff =
-                            Maybe.map2 (-)
-                                model.indicators.endurance
-                                model.indicators_.endurance
-                      }
-                    , { name = "Power"
-                      , score =
-                            Maybe.withDefault 0 model.indicators.power
-                      , diff =
-                            Maybe.map2 (-)
-                                model.indicators.power
-                                model.indicators_.power
-                      }
+                    (getIndicator
+                        "Fit Score"
+                        model.indicators.total
+                        model.indicators_.total
+                    )
+                    [ getIndicator "Cardio"
+                        model.indicators.cardio
+                        model.indicators_.cardio
+                    , getIndicator "Endurance"
+                        model.indicators.endurance
+                        model.indicators_.endurance
+                    , getIndicator "Power"
+                        model.indicators.power
+                        model.indicators_.power
                     ]
                 ]
             ]
         , div [ class "col s12 m3" ]
             [ div [ class "row" ] viewCards ]
         ]
+
+
+getIndicator : String -> Maybe Int -> Maybe Int -> Indicator
+getIndicator name1 value oldValue =
+    { name = name1
+    , score = Maybe.withDefault 0 value
+    , diff = Maybe.map2 (-) value oldValue
+    }
 
 
 viewCards : List (Html msg)

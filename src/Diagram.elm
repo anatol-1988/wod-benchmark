@@ -1,4 +1,4 @@
-module Diagram exposing (plotBenchmarks, Size)
+module Diagram exposing (plotBenchmarks, Size, Indicator)
 
 import Svg exposing (circle, svg, text_, text)
 import Svg.Attributes exposing (cx, cy, x, y, r, viewBox, height, width)
@@ -12,14 +12,14 @@ type alias Size =
     }
 
 
-type alias Result =
+type alias Indicator =
     { name : String
     , score : Int
     , diff : Maybe Int
     }
 
 
-plotBenchmarks : Size -> Result -> List Result -> Html.Html msg
+plotBenchmarks : Size -> Indicator -> List Indicator -> Html.Html msg
 plotBenchmarks size total results =
     let
         numberOfResults =
