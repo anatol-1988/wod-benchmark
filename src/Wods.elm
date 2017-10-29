@@ -11,10 +11,7 @@ module Wods
         )
 
 import List exposing (foldl)
-import String exposing (toInt)
-import Result exposing (withDefault)
-import Time exposing (Time)
-import Date.Extra.Create exposing (timeFromFields)
+import Time exposing (Time, second, minute)
 import Date exposing (toTime)
 import Arithmetic exposing (cubeRoot)
 
@@ -62,8 +59,8 @@ wods =
       , power = 0.3
       , range =
             ForTime
-                { worst = toTime <| timeFromFields 0 5 0 0
-                , best = toTime <| timeFromFields 0 2 1 0
+                { worst = 5 * minute
+                , best = 2 * minute + 1 * second
                 , value = Nothing
                 }
       }
@@ -74,8 +71,8 @@ wods =
       , power = 0.1
       , range =
             ForTime
-                { worst = toTime <| timeFromFields 0 60 0 0
-                , best = toTime <| timeFromFields 0 30 0 0
+                { worst = 60 * minute
+                , best = 30 * minute
                 , value = Nothing
                 }
       }
@@ -128,8 +125,8 @@ wods =
       , power = 0.7
       , range =
             ForTime
-                { worst = toTime <| timeFromFields 0 6 0 0
-                , best = toTime <| timeFromFields 0 1 11 0
+                { worst = 6 * minute
+                , best = 1 * minute + 11 * second
                 , value = Nothing
                 }
       }

@@ -8,9 +8,8 @@ import List exposing (map, map2)
 import String exposing (toInt)
 import Result exposing (withDefault)
 import Wods exposing (Wod, WodType(..), normalize)
-import Date.Extra.Create exposing (timeFromFields)
 import Date exposing (toTime, fromTime)
-import Time exposing (Time)
+import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
 import Markdown exposing (toHtml)
 import Platform exposing (Task)
@@ -27,14 +26,33 @@ parseTime str =
         case parts of
             m :: s :: _ ->
                 Just <|
-                    toTime <|
-                        timeFromFields 0
-                            (withDefault 0 <| toInt m)
-                            (withDefault 0 <| toInt s)
-                            0
+                    (withDefault 0 <| String.toFloat m)
+                        * minute
+                        + (withDefault 0 <| String.toFloat s)
+                        * second
 
             _ ->
                 Nothing
+
+
+timeToString : Time -> String
+timeToString time =
+    let
+        minutes =
+            truncate <| Time.inMinutes time
+
+        seconds =
+            truncate <| Time.inSeconds <| time - toFloat minutes * minute
+
+        toStringLeadingZero n =
+            (if n < 10 then
+                "0"
+             else
+                ""
+            )
+                ++ toString n
+    in
+        toString minutes ++ ":" ++ toStringLeadingZero seconds
 
 
 
@@ -89,42 +107,38 @@ type Msg
     | GetWods (List ( String, String ))
 
 
-setWodValue : String -> String -> List Wod -> List Wod
-setWodValue id value wods =
-    let
-        setWod wod =
-            { wod
-                | range =
-                    if wod.id == id then
-                        case wod.range of
-                            ForTime range ->
-                                ForTime { range | value = parseTime value }
+setWodValue : String -> String -> Wod -> Wod
+setWodValue id value wod =
+    { wod
+        | range =
+            if wod.id == id then
+                case wod.range of
+                    ForTime range ->
+                        ForTime { range | value = parseTime value }
 
-                            ForReps range ->
-                                ForReps
-                                    { range
-                                        | value =
-                                            Result.toMaybe <| toInt value
-                                    }
+                    ForReps range ->
+                        ForReps
+                            { range
+                                | value =
+                                    Result.toMaybe <| toInt value
+                            }
 
-                            PRInfo range ->
-                                PRInfo
-                                    { range
-                                        | value =
-                                            Result.toMaybe <| toInt value
-                                    }
-                    else
-                        wod.range
-            }
-    in
-        map setWod wods
+                    PRInfo range ->
+                        PRInfo
+                            { range
+                                | value =
+                                    Result.toMaybe <| toInt value
+                            }
+            else
+                wod.range
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Slide id value ->
-            { model | wods = setWodValue id value model.wods } ! []
+            { model | wods = map (setWodValue id value) model.wods } ! []
 
         CalcAll ->
             { model
@@ -139,7 +153,23 @@ update msg model =
                 ! []
 
         GetWods wods ->
-            model ! []
+            let
+                savedWods =
+                    Dict.fromList wods
+
+                setWod wod =
+                    let
+                        savedValue =
+                            Dict.get wod.id savedWods
+                    in
+                        case savedValue of
+                            Nothing ->
+                                wod
+
+                            Just value ->
+                                setWodValue wod.id value wod
+            in
+                { model | wods = map setWod model.wods } ! []
 
         none ->
             model ! []
@@ -149,8 +179,8 @@ update msg model =
 ---- VIEW ----
 
 
-renderInput : Wod -> Maybe String -> Html Msg
-renderInput wod value =
+renderInput : Wod -> Html Msg
+renderInput wod =
     div [ class "col s12" ]
         [ (div [ Html.Attributes.class "input-field" ] <|
             (case wod.range of
@@ -160,7 +190,9 @@ renderInput wod value =
                         , Html.Attributes.id wod.id
                         , onInput (Slide wod.id)
                         , Html.Attributes.class "validate"
-                        , Html.Attributes.value <| Maybe.withDefault "" value
+                        , Maybe.map timeToString range.value
+                            |> Maybe.withDefault ""
+                            |> Html.Attributes.value
                         ]
                         []
                     ]
@@ -172,6 +204,9 @@ renderInput wod value =
                         , Html.Attributes.min <| toString range.worst
                         , Html.Attributes.max <| toString range.best
                         , onInput (Slide wod.id)
+                        , Maybe.map toString range.value
+                            |> Maybe.withDefault ""
+                            |> Html.Attributes.value
                         ]
                         []
                     ]
@@ -183,6 +218,9 @@ renderInput wod value =
                         , Html.Attributes.min <| toString range.worst
                         , Html.Attributes.max <| toString range.best
                         , onInput (Slide wod.id)
+                        , Maybe.map toString range.value
+                            |> Maybe.withDefault ""
+                            |> Html.Attributes.value
                         ]
                         []
                     ]
@@ -216,7 +254,7 @@ renderInputs model =
         |> List.map
             (\w ->
                 div [ Html.Attributes.class "row" ]
-                    [ renderInput w <| Dict.get w.id model.savedValues ]
+                    [ renderInput w ]
             )
 
 
