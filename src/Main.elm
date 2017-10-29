@@ -8,7 +8,6 @@ import List exposing (map, map2)
 import String exposing (toInt)
 import Result exposing (withDefault)
 import Wods exposing (Wod, WodType(..), normalize)
-import Date exposing (toTime, fromTime)
 import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
 import Markdown exposing (toHtml)
@@ -169,7 +168,21 @@ update msg model =
                             Just value ->
                                 setWodValue wod.id value wod
             in
-                { model | wods = map setWod model.wods } ! []
+                let
+                    newWods =
+                        map setWod model.wods
+                in
+                    { model
+                        | wods = newWods
+                        , indicators_ = model.indicators
+                        , indicators =
+                            { cardio = Wods.getCardio newWods
+                            , endurance = Wods.getEndurance newWods
+                            , power = Wods.getPower newWods
+                            , total = Wods.getTotal newWods
+                            }
+                    }
+                        ! []
 
         none ->
             model ! []
