@@ -16,4 +16,8 @@ var myapp = Main.embed(document.getElementById('root'));
 
 myapp.ports.getWods.send([["frn", "2:35"], ["mrh", "20:42"]]);
 
+myapp.ports.setWods.subscribe(function(wods) {
+    console.log("wods: ", wods)
+});
+
 registerServiceWorker();

@@ -12,7 +12,7 @@ import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
 import Markdown exposing (toHtml)
 import Platform exposing (Task)
-import Storage exposing (getWods)
+import Storage exposing (getWods, setWods)
 import Dict exposing (Dict, empty)
 
 
@@ -149,7 +149,7 @@ update msg model =
                     , total = Wods.getTotal model.wods
                     }
             }
-                ! []
+                ! [setWods [("frn", "5:30")]]
 
         GetWods wods ->
             let
