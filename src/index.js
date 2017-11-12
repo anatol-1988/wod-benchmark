@@ -14,10 +14,14 @@ import registerServiceWorker from './registerServiceWorker';
 
 var myapp = Main.embed(document.getElementById('root'));
 
-myapp.ports.getWods.send([["frn", "2:35"], ["mrh", "20:42"]]);
+let wods = localStorage.getItem('wods')
 
-myapp.ports.setWods.subscribe(function(wods) {
-    console.log("wods: ", wods)
+if (wods != null)
+    myapp.ports.getWods.send(JSON.parse(wods));
+
+myapp.ports.saveWods.subscribe(function(wods) {
+    localStorage.setItem('wods',  JSON.stringify(wods))
+    Materialize.toast('Results saved', 4000) // 4000 is the duration of the toast
 });
 
 registerServiceWorker();

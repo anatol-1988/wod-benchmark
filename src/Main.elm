@@ -1,7 +1,7 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, img, input, ul, li, option, label, h3, h4)
-import Html exposing (i, button, span, p, a)
+import Html exposing (Html, text, div, img, input, ul, li, option, label, h3)
+import Html exposing (h4, i, button, span, p, a)
 import Html.Attributes exposing (src, type_, min, max, value, class, id, href)
 import Html.Events exposing (onInput, onClick, onMouseDown)
 import List exposing (map, map2)
@@ -12,7 +12,7 @@ import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
 import Markdown exposing (toHtml)
 import Platform exposing (Task)
-import Storage exposing (getWods, setWods)
+import Storage
 import Dict exposing (Dict, empty)
 
 
@@ -70,7 +70,6 @@ type alias Model =
     { wods : List Wod
     , indicators : Indicators
     , indicators_ : Indicators
-    , savedValues : Dict String String
     }
 
 
@@ -89,7 +88,6 @@ init =
             , power = Nothing
             , total = Nothing
             }
-      , savedValues = Dict.empty
       }
     , Cmd.none
     )
@@ -133,6 +131,23 @@ setWodValue id value wod =
     }
 
 
+getSerializedResult : Wod -> Maybe ( String, String )
+getSerializedResult wod =
+    let
+        val =
+            case wod.range of
+                ForTime range ->
+                    Maybe.map timeToString range.value
+
+                ForReps range ->
+                    Maybe.map toString range.value
+
+                PRInfo range ->
+                    Maybe.map toString range.value
+    in
+        Maybe.map (\v -> ( wod.id, v )) val
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -149,7 +164,9 @@ update msg model =
                     , total = Wods.getTotal model.wods
                     }
             }
-                ! [setWods [("frn", "5:30")]]
+                ! [ List.filterMap getSerializedResult model.wods
+                        |> Storage.saveWods
+                  ]
 
         GetWods wods ->
             let
@@ -361,7 +378,7 @@ viewCards =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    getWods GetWods
+    Storage.getWods GetWods
 
 
 main : Program Never Model Msg
