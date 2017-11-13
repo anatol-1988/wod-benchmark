@@ -30,6 +30,8 @@ parseTime str =
                         + (withDefault 0 <| String.toFloat s)
                         * second
 
+            s :: _ -> Just <| (withDefault 0 <| String.toFloat s) * second
+
             _ ->
                 Nothing
 
