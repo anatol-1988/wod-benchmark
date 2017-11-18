@@ -8,6 +8,7 @@ module Wods
         , getEndurance
         , getTotal
         , normalize
+        , WodId
         )
 
 import List exposing (foldl)
@@ -36,8 +37,12 @@ type WodType
     | ForReps RangeInt
 
 
+type alias WodId =
+    String
+
+
 type alias Wod =
-    { id : String
+    { id : WodId
     , name : String
     , cardio : Float
     , endurance : Float

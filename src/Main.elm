@@ -4,7 +4,7 @@ import Html exposing (Html, text, div, img, input, ul, li, option, label, h3)
 import Html exposing (h4, i, button, span, p, a)
 import Html.Attributes exposing (src, type_, min, max, value, class, id, href)
 import Html.Events exposing (onInput, onClick, onMouseDown)
-import List exposing (map, map2)
+import List
 import String exposing (toInt)
 import Result exposing (withDefault)
 import Wods exposing (Wod, WodType(..), normalize)
@@ -30,7 +30,8 @@ parseTime str =
                         + (withDefault 0 <| String.toFloat s)
                         * second
 
-            s :: _ -> Just <| (withDefault 0 <| String.toFloat s) * second
+            s :: _ ->
+                Just <| (withDefault 0 <| String.toFloat s) * second
 
             _ ->
                 Nothing
@@ -70,6 +71,7 @@ type alias Indicators =
 
 type alias Model =
     { wods : List Wod
+    , values : Dict String String
     , indicators : Indicators
     , indicators_ : Indicators
     }
@@ -78,6 +80,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { wods = Wods.wods
+      , values = Dict.empty
       , indicators =
             { cardio = Nothing
             , endurance = Nothing
@@ -101,7 +104,7 @@ init =
 
 type Msg
     = NoOp
-    | Slide String String
+    | OnChange String String
     | CalcAll
     | GetWods (List ( String, String ))
 
@@ -153,22 +156,35 @@ getSerializedResult wod =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Slide id value ->
-            { model | wods = map (setWodValue id value) model.wods } ! []
+        OnChange id value ->
+            { model | values = Dict.insert id value model.values } ! []
 
         CalcAll ->
-            { model
-                | indicators_ = model.indicators
-                , indicators =
-                    { cardio = Wods.getCardio model.wods
-                    , endurance = Wods.getEndurance model.wods
-                    , power = Wods.getPower model.wods
-                    , total = Wods.getTotal model.wods
-                    }
-            }
-                ! [ List.filterMap getSerializedResult model.wods
-                        |> Storage.saveWods
-                  ]
+            let
+                updatedWods =
+                    List.map
+                        (\w ->
+                            setWodValue w.id
+                                (Maybe.withDefault "" <|
+                                    Dict.get w.id model.values
+                                )
+                                w
+                        )
+                        model.wods
+            in
+                { model
+                    | wods = updatedWods
+                    , indicators_ = model.indicators
+                    , indicators =
+                        { cardio = Wods.getCardio updatedWods
+                        , endurance = Wods.getEndurance updatedWods
+                        , power = Wods.getPower updatedWods
+                        , total = Wods.getTotal updatedWods
+                        }
+                }
+                    ! [ List.filterMap getSerializedResult updatedWods
+                            |> Storage.saveWods
+                      ]
 
         GetWods wods ->
             let
@@ -189,7 +205,7 @@ update msg model =
             in
                 let
                     newWods =
-                        map setWod model.wods
+                        List.map setWod model.wods
                 in
                     { model
                         | wods = newWods
@@ -211,8 +227,8 @@ update msg model =
 ---- VIEW ----
 
 
-renderInput : Wod -> Html Msg
-renderInput wod =
+renderInput : Maybe String -> Wod -> Html Msg
+renderInput value wod =
     div [ class "col s12" ]
         [ (div [ Html.Attributes.class "input-field" ] <|
             (case wod.range of
@@ -220,11 +236,9 @@ renderInput wod =
                     [ input
                         [ type_ "text"
                         , Html.Attributes.id wod.id
-                        , onInput (Slide wod.id)
+                        , onInput (OnChange wod.id)
                         , Html.Attributes.class "validate"
-                        , Maybe.map timeToString range.value
-                            |> Maybe.withDefault ""
-                            |> Html.Attributes.value
+                        , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
                         []
                     ]
@@ -235,10 +249,8 @@ renderInput wod =
                         , Html.Attributes.id wod.id
                         , Html.Attributes.min <| toString range.worst
                         , Html.Attributes.max <| toString range.best
-                        , onInput (Slide wod.id)
-                        , Maybe.map toString range.value
-                            |> Maybe.withDefault ""
-                            |> Html.Attributes.value
+                        , onInput (OnChange wod.id)
+                        , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
                         []
                     ]
@@ -249,10 +261,8 @@ renderInput wod =
                         , Html.Attributes.id wod.id
                         , Html.Attributes.min <| toString range.worst
                         , Html.Attributes.max <| toString range.best
-                        , onInput (Slide wod.id)
-                        , Maybe.map toString range.value
-                            |> Maybe.withDefault ""
-                            |> Html.Attributes.value
+                        , onInput (OnChange wod.id)
+                        , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
                         []
                     ]
@@ -286,7 +296,7 @@ renderInputs model =
         |> List.map
             (\w ->
                 div [ Html.Attributes.class "row" ]
-                    [ renderInput w ]
+                    [ renderInput (Dict.get w.id model.values) w ]
             )
 
 
