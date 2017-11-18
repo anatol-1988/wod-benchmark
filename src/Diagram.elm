@@ -89,10 +89,10 @@ plotBenchmarks size total results =
                             else if n < 0 then
                                 ( "−" ++ (toString <| abs n), "negative" )
                             else
-                                ( toString 0, "zero" )
+                                ( "", "zero" )
 
                         Nothing ->
-                            ( toString 0, "zero" )
+                            ( "", "zero" )
             in
                 [ text_
                     [ x (toString nameX)

@@ -1,13 +1,13 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, img, input, ul, li, option, label, h3)
+import Html exposing (Html, text, div, img, ul, li, option, label, h3)
 import Html exposing (h4, i, button, span, p, a)
 import Html.Attributes exposing (src, type_, min, max, value, class, id, href)
 import Html.Events exposing (onInput, onClick, onMouseDown)
 import List
 import String exposing (toInt)
-import Result exposing (withDefault)
-import Wods exposing (Wod, WodType(..), normalize)
+import Result
+import Wods exposing (Wod, WodType(..), normalize, WodId)
 import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
 import Markdown exposing (toHtml)
@@ -25,13 +25,13 @@ parseTime str =
         case parts of
             m :: s :: _ ->
                 Just <|
-                    (withDefault 0 <| String.toFloat m)
+                    (Result.withDefault 0 <| String.toFloat m)
                         * minute
-                        + (withDefault 0 <| String.toFloat s)
+                        + (Result.withDefault 0 <| String.toFloat s)
                         * second
 
             s :: _ ->
-                Just <| (withDefault 0 <| String.toFloat s) * second
+                Result.toMaybe <| Result.map ((*) second) (String.toFloat s)
 
             _ ->
                 Nothing
@@ -104,7 +104,7 @@ init =
 
 type Msg
     = NoOp
-    | OnChange String String
+    | OnChangeValue WodId String
     | CalcAll
     | GetWods (List ( String, String ))
 
@@ -153,34 +153,41 @@ getSerializedResult wod =
         Maybe.map (\v -> ( wod.id, v )) val
 
 
+updateWods : Dict WodId String -> List Wod -> List Wod
+updateWods values wods =
+    List.map
+        (\w ->
+            setWodValue w.id
+                (Maybe.withDefault "" <| Dict.get w.id values)
+                w
+        )
+        wods
+
+
+updateIndicators : List Wod -> Indicators
+updateIndicators wods =
+    { cardio = Wods.getCardio wods
+    , endurance = Wods.getEndurance wods
+    , power = Wods.getPower wods
+    , total = Wods.getTotal wods
+    }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        OnChange id value ->
+        OnChangeValue id value ->
             { model | values = Dict.insert id value model.values } ! []
 
         CalcAll ->
             let
                 updatedWods =
-                    List.map
-                        (\w ->
-                            setWodValue w.id
-                                (Maybe.withDefault "" <|
-                                    Dict.get w.id model.values
-                                )
-                                w
-                        )
-                        model.wods
+                    updateWods model.values model.wods
             in
                 { model
                     | wods = updatedWods
                     , indicators_ = model.indicators
-                    , indicators =
-                        { cardio = Wods.getCardio updatedWods
-                        , endurance = Wods.getEndurance updatedWods
-                        , power = Wods.getPower updatedWods
-                        , total = Wods.getTotal updatedWods
-                        }
+                    , indicators = updateIndicators updatedWods
                 }
                     ! [ List.filterMap getSerializedResult updatedWods
                             |> Storage.saveWods
@@ -191,33 +198,14 @@ update msg model =
                 savedWods =
                     Dict.fromList wods
 
-                setWod wod =
-                    let
-                        savedValue =
-                            Dict.get wod.id savedWods
-                    in
-                        case savedValue of
-                            Nothing ->
-                                wod
-
-                            Just value ->
-                                setWodValue wod.id value wod
+                updatedWods =
+                    updateWods savedWods model.wods
             in
-                let
-                    newWods =
-                        List.map setWod model.wods
-                in
-                    { model
-                        | wods = newWods
-                        , indicators_ = model.indicators
-                        , indicators =
-                            { cardio = Wods.getCardio newWods
-                            , endurance = Wods.getEndurance newWods
-                            , power = Wods.getPower newWods
-                            , total = Wods.getTotal newWods
-                            }
-                    }
-                        ! []
+                { model
+                    | values = savedWods
+                    , indicators = updateIndicators updatedWods
+                }
+                    ! []
 
         none ->
             model ! []
@@ -233,10 +221,10 @@ renderInput value wod =
         [ (div [ Html.Attributes.class "input-field" ] <|
             (case wod.range of
                 ForTime range ->
-                    [ input
+                    [ Html.input
                         [ type_ "text"
                         , Html.Attributes.id wod.id
-                        , onInput (OnChange wod.id)
+                        , onInput (OnChangeValue wod.id)
                         , Html.Attributes.class "validate"
                         , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
@@ -244,24 +232,24 @@ renderInput value wod =
                     ]
 
                 ForReps range ->
-                    [ input
+                    [ Html.input
                         [ type_ "number"
                         , Html.Attributes.id wod.id
                         , Html.Attributes.min <| toString range.worst
                         , Html.Attributes.max <| toString range.best
-                        , onInput (OnChange wod.id)
+                        , onInput (OnChangeValue wod.id)
                         , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
                         []
                     ]
 
                 PRInfo range ->
-                    [ input
+                    [ Html.input
                         [ type_ "number"
                         , Html.Attributes.id wod.id
                         , Html.Attributes.min <| toString range.worst
                         , Html.Attributes.max <| toString range.best
-                        , onInput (OnChange wod.id)
+                        , onInput (OnChangeValue wod.id)
                         , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
                         []
