@@ -105,6 +105,7 @@ init =
 type Msg
     = NoOp
     | OnChangeValue WodId String
+    | OnChangeInterval WodId String
     | CalcAll
     | GetWods (List ( String, String ))
 
@@ -173,11 +174,39 @@ updateIndicators wods =
     }
 
 
+maskTime : String -> String
+maskTime time =
+    String.filter
+        (\char ->
+            List.member char
+                [ '0'
+                , '1'
+                , '2'
+                , '3'
+                , '4'
+                , '5'
+                , '6'
+                , '7'
+                , '8'
+                , '9'
+                , ':'
+                ]
+        )
+        time
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         OnChangeValue id value ->
             { model | values = Dict.insert id value model.values } ! []
+
+        OnChangeInterval id interval ->
+            { model
+                | values =
+                    Dict.insert id (maskTime interval) model.values
+            }
+                ! []
 
         CalcAll ->
             let
@@ -224,7 +253,7 @@ renderInput value wod =
                     [ Html.input
                         [ type_ "text"
                         , Html.Attributes.id wod.id
-                        , onInput (OnChangeValue wod.id)
+                        , onInput (OnChangeInterval wod.id)
                         , Html.Attributes.class "validate"
                         , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
