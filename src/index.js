@@ -32,6 +32,10 @@ firebase.auth()
         }
         // The signed-in user info.
         var user = result.user;
+
+        if (user) {
+            myapp.ports.signedIn.send({displayName : user.displayName, profilePic : user.photoURL});
+        }
     })
     .catch(function(error) {
         // Handle Errors here.

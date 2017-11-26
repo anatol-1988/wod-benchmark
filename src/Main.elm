@@ -70,8 +70,7 @@ type alias Indicators =
 
 
 type alias Profile =
-    { familyName : Maybe String
-    , name : Maybe String
+    { displayName : Maybe String
     , profilePic : Maybe String
     }
 
@@ -101,7 +100,7 @@ init =
             , power = Nothing
             , total = Nothing
             }
-      , profile = { familyName = Nothing, name = Nothing, profilePic = Nothing }
+      , profile = { displayName = Nothing, profilePic = Nothing }
       }
     , Cmd.none
     )
@@ -118,6 +117,7 @@ type Msg
     | CalcAll
     | GetWods (List ( String, String ))
     | SignIn
+    | SignedIn Profile
 
 
 setWodValue : String -> String -> Wod -> Wod
@@ -249,6 +249,9 @@ update msg model =
         SignIn ->
             model ! [ Storage.signIn () ]
 
+        SignedIn profile ->
+            { model | profile = profile } ! []
+
         none ->
             model ! []
 
@@ -369,7 +372,7 @@ view model =
                 ]
             ]
         , div [ class "col s12 m3" ]
-            [ div [ class "row" ] viewProfile ]
+            [ div [ class "row" ] <| viewProfile model.profile ]
         ]
 
 
@@ -381,15 +384,24 @@ getIndicator name1 value oldValue =
     }
 
 
-viewProfile : List (Html Msg)
-viewProfile =
+viewProfile : Profile -> List (Html Msg)
+viewProfile profile =
     [ div [ class "card grey lighten-5" ]
-        [ div [ class "card-image" ]
-            [ img [ Html.Attributes.src "http://www.i-dedicate.com/media/profile_images/default.png" ] []
-            , span [ class "card-title" ] [ text "Anatol Karalkou" ]
+        [ div [ class "card-image responsive-img" ]
+            [ img
+                [ Html.Attributes.src <|
+                    Maybe.withDefault
+                        "http://www.i-dedicate.com/media/profile_images/default.png"
+                        profile.profilePic
+                ]
+                []
             ]
         , div [ class "card-content" ]
-            []
+            [ span [ class "card-title" ]
+                [ text <|
+                    Maybe.withDefault "Noname CRSFT amateur" profile.displayName
+                ]
+            ]
         , div [ class "card-action" ]
             [ a
                 [ id "signin"
@@ -435,7 +447,7 @@ viewProfile =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Storage.getWods GetWods
+    Sub.batch [ Storage.getWods GetWods, Storage.signedIn SignedIn ]
 
 
 main : Program Never Model Msg
