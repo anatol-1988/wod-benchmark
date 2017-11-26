@@ -69,11 +69,19 @@ type alias Indicators =
     }
 
 
+type alias Profile =
+    { familyName : Maybe String
+    , name : Maybe String
+    , profilePic : Maybe String
+    }
+
+
 type alias Model =
     { wods : List Wod
     , values : Dict String String
     , indicators : Indicators
     , indicators_ : Indicators
+    , profile : Profile
     }
 
 
@@ -93,6 +101,7 @@ init =
             , power = Nothing
             , total = Nothing
             }
+      , profile = { familyName = Nothing, name = Nothing, profilePic = Nothing }
       }
     , Cmd.none
     )
@@ -360,7 +369,7 @@ view model =
                 ]
             ]
         , div [ class "col s12 m3" ]
-            [ div [ class "row" ] viewCards ]
+            [ div [ class "row" ] viewProfile ]
         ]
 
 
@@ -372,17 +381,21 @@ getIndicator name1 value oldValue =
     }
 
 
-viewCards : List (Html Msg)
-viewCards =
-    [ div [ class "row" ]
-        [ button
-            [ class "waves-effect waves-light btn-large"
-            , id "signin"
-            , onClick SignIn
+viewProfile : List (Html Msg)
+viewProfile =
+    [ div [ class "card grey lighten-5" ]
+        [ div [ class "card-image" ]
+            [ img [ Html.Attributes.src "http://www.i-dedicate.com/media/profile_images/default.png" ] []
+            , span [ class "card-title" ] [ text "Anatol Karalkou" ]
             ]
-            [ i [ class "material-icons right" ]
-                [ text "cached" ]
-            , text "Sign In"
+        , div [ class "card-content" ]
+            []
+        , div [ class "card-action" ]
+            [ a
+                [ id "signin"
+                , onClick SignIn
+                ]
+                [ text "Sign In" ]
             ]
         ]
     , div [ class "card blue darken-4" ]
