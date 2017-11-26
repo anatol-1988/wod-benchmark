@@ -108,6 +108,7 @@ type Msg
     | OnChangeInterval WodId String
     | CalcAll
     | GetWods (List ( String, String ))
+    | SignIn
 
 
 setWodValue : String -> String -> Wod -> Wod
@@ -235,6 +236,9 @@ update msg model =
                     , indicators = updateIndicators updatedWods
                 }
                     ! []
+
+        SignIn ->
+            model ! [ Storage.signIn () ]
 
         none ->
             model ! []
@@ -368,9 +372,20 @@ getIndicator name1 value oldValue =
     }
 
 
-viewCards : List (Html msg)
+viewCards : List (Html Msg)
 viewCards =
-    [ div [ class "card blue darken-4" ]
+    [ div [ class "row" ]
+        [ button
+            [ class "waves-effect waves-light btn-large"
+            , id "signin"
+            , onClick SignIn
+            ]
+            [ i [ class "material-icons right" ]
+                [ text "cached" ]
+            , text "Sign In"
+            ]
+        ]
+    , div [ class "card blue darken-4" ]
         [ div [ class "card-content white-text" ]
             [ toHtml []
                 """Your FitScore is 74 and you improved what is OK.

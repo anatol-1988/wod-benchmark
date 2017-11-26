@@ -17,7 +17,7 @@
     <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
     <!--Let browser know website is optimized for mobile-->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CrossFit benchmark</title>
 </head>
 
@@ -27,6 +27,19 @@
     </noscript>
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+    <script>
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyB1uiCojoz-VY9gn4suGVe3cZ7mWPYRBlA",
+            authDomain: "wodbenchmark.firebaseapp.com",
+            databaseURL: "https://wodbenchmark.firebaseio.com",
+            projectId: "wodbenchmark",
+            storageBucket: "wodbenchmark.appspot.com",
+            messagingSenderId: "310610411747"
+        };
+        firebase.initializeApp(config);
+    </script>
     <div id="root" class="container"></div>
 </body>
 
