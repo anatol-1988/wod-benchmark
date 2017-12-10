@@ -386,28 +386,32 @@ getIndicator name1 value oldValue =
 
 viewProfile : Profile -> List (Html Msg)
 viewProfile profile =
-    [ div [ class "card grey lighten-5" ]
-        [ div [ class "card-image responsive-img" ]
-            [ img
-                [ Html.Attributes.src <|
-                    Maybe.withDefault
-                        "http://www.i-dedicate.com/media/profile_images/default.png"
-                        profile.profilePic
+    [ div [ class "user-details grey light-2 z-depth-2" ]
+        [ div [ class "row valign-wrapper" ]
+            [ div [ class "col s4 m4 l4 offset-l1" ]
+                [ img
+                    [ class "circle responsive-img valign profile-image"
+                    , Html.Attributes.src <|
+                        Maybe.withDefault
+                            "http://www.i-dedicate.com/media/profile_images/default.png"
+                            profile.profilePic
+                    ]
+                    []
                 ]
-                []
-            ]
-        , div [ class "card-content" ]
-            [ span [ class "card-title" ]
-                [ text <|
-                    Maybe.withDefault "Noname CRSFT amateur" profile.displayName
+            , div [ class "col s8 m8 l6" ]
+                [ span [ class "card-title" ]
+                    [ text <|
+                        Maybe.withDefault "Noname CRSFT amateur" profile.displayName
+                    ]
                 ]
-            ]
-        , div [ class "card-action" ]
-            [ a
-                [ id "signin"
-                , onClick SignIn
+            , div [ class "card-action" ]
+                [ a
+                    [ id "signin"
+                    , onClick SignIn
+                    , class "waves-effect waves-light btn"
+                    ]
+                    [ text "Sign In" ]
                 ]
-                [ text "Sign In" ]
             ]
         ]
     , div [ class "card blue darken-4" ]

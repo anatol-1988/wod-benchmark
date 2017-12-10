@@ -4,29 +4,34 @@ document.head.appendChild(jQueryScript);
 
 var materialize = document.createElement('materialize');
 materialize.setAttribute(
-    'src', 'https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js');
+    'src',
+    'https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js');
 document.head.appendChild(materialize);
 
 import './main.css';
-import {Main} from './Main.elm';
+import {
+    Main
+} from './Main.elm';
 import registerServiceWorker from './registerServiceWorker';
 
 var myapp = Main.embed(document.getElementById('root'));
-var provider = new firebase.auth.GoogleAuthProvider();
-provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+var provider = new firebase.auth.FacebookAuthProvider();
+var database = firebase.database();
+provider.addScope('user_birthday');
 firebase.auth().useDeviceLanguage();
 registerServiceWorker();
 
-let wods = localStorage.getItem('wods');
-
-if (wods != null)
-    myapp.ports.getWods.send(JSON.parse(wods));
+firebase.database().ref('/users/' + '0').once('value').then(function(snapshot) {
+    var wods = snapshot.val();
+    myapp.ports.getWods.send(wods);
+});
 
 firebase.auth()
     .getRedirectResult()
-    .then(function(result) {
+    .then(function (result) {
         if (result.credential) {
-            // This gives you a Google Access Token. You can use it to access the Google API.
+            // This gives you a Google Access Token. You can use it to access the
+            // Google API.
             var token = result.credential.accessToken;
             // ...
         }
@@ -34,10 +39,13 @@ firebase.auth()
         var user = result.user;
 
         if (user) {
-            myapp.ports.signedIn.send({displayName : user.displayName, profilePic : user.photoURL});
+            myapp.ports.signedIn.send({
+                displayName: user.displayName,
+                profilePic: user.photoURL
+            });
         }
     })
-    .catch(function(error) {
+    .catch(function (error) {
         // Handle Errors here.
         var errorCode = error.code;
         var errorMessage = error.message;
@@ -48,9 +56,11 @@ firebase.auth()
         // ...
     });
 
-myapp.ports.saveWods.subscribe(function(wods) {
-    localStorage.setItem('wods', JSON.stringify(wods));
+myapp.ports.saveWods.subscribe(function (wods) {
+    firebase.database().ref('users/' + '0').set(wods);
     Materialize.toast('Results saved', 4000);
 });
 
-myapp.ports.signIn.subscribe(function() { firebase.auth().signInWithRedirect(provider); });
+myapp.ports.signIn.subscribe(function () {
+    firebase.auth().signInWithRedirect(provider);
+});
