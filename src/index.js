@@ -21,10 +21,20 @@ provider.addScope('user_birthday');
 firebase.auth().useDeviceLanguage();
 registerServiceWorker();
 
-firebase.database().ref('/users/' + '0').once('value').then(function(snapshot) {
-    var wods = snapshot.val();
-    myapp.ports.getWods.send(wods);
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        myapp.ports.signedIn.send({
+            displayName: user.displayName,
+            profilePic: user.photoURL
+        });
+    }
 });
+
+firebase.database().ref('/users/' + '0').once('value')
+    .then(function (snapshot) {
+        var wods = snapshot.val();
+        myapp.ports.getWods.send(wods);
+    });
 
 firebase.auth()
     .getRedirectResult()
@@ -37,13 +47,6 @@ firebase.auth()
         }
         // The signed-in user info.
         var user = result.user;
-
-        if (user) {
-            myapp.ports.signedIn.send({
-                displayName: user.displayName,
-                profilePic: user.photoURL
-            });
-        }
     })
     .catch(function (error) {
         // Handle Errors here.
@@ -63,4 +66,10 @@ myapp.ports.saveWods.subscribe(function (wods) {
 
 myapp.ports.signIn.subscribe(function () {
     firebase.auth().signInWithRedirect(provider);
+});
+
+myapp.ports.updateInputFields.subscribe(function () {
+    setTimeout(function () {
+        Materialize.updateTextFields();
+    });
 });

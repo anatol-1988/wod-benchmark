@@ -244,7 +244,7 @@ update msg model =
                     | values = savedWods
                     , indicators = updateIndicators updatedWods
                 }
-                    ! []
+                    ! [ Storage.updateInputFields ()]
 
         SignIn ->
             model ! [ Storage.signIn () ]
@@ -401,17 +401,23 @@ viewProfile profile =
             , div [ class "col s8 m8 l6" ]
                 [ span [ class "card-title" ]
                     [ text <|
-                        Maybe.withDefault "Noname CRSFT amateur" profile.displayName
+                        Maybe.withDefault "Noname CRSFT amateur"
+                            profile.displayName
                     ]
                 ]
-            , div [ class "card-action" ]
-                [ a
-                    [ id "signin"
-                    , onClick SignIn
-                    , class "waves-effect waves-light btn"
-                    ]
-                    [ text "Sign In" ]
-                ]
+            , case profile.displayName of
+                Just _ ->
+                    text ""
+
+                Nothing ->
+                    div [ class "card-action" ]
+                        [ a
+                            [ id "signin"
+                            , onClick SignIn
+                            , class "waves-effect waves-light btn"
+                            ]
+                            [ text "Sign In" ]
+                        ]
             ]
         ]
     , div [ class "card blue darken-4" ]

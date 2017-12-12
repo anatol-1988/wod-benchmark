@@ -13,3 +13,5 @@ port signIn : () -> Cmd msg
 port signedIn :
     ({ displayName : Maybe String, profilePic : Maybe String } -> msg)
     -> Sub msg
+
+port updateInputFields : () -> Cmd msg
