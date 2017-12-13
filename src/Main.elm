@@ -12,7 +12,7 @@ import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
 import Markdown exposing (toHtml)
 import Platform exposing (Task)
-import Storage
+import Ports
 import Dict exposing (Dict, empty)
 
 
@@ -72,6 +72,8 @@ type alias Indicators =
 type alias Profile =
     { displayName : Maybe String
     , profilePic : Maybe String
+    , identifier : String
+    , userUid : String
     }
 
 
@@ -80,8 +82,13 @@ type alias Model =
     , values : Dict String String
     , indicators : Indicators
     , indicators_ : Indicators
-    , profile : Profile
+    , profile : AuthorizationState
     }
+
+
+type AuthorizationState
+    = NotAuthorized
+    | Authorized Profile
 
 
 init : ( Model, Cmd Msg )
@@ -100,7 +107,7 @@ init =
             , power = Nothing
             , total = Nothing
             }
-      , profile = { displayName = Nothing, profilePic = Nothing }
+      , profile = NotAuthorized
       }
     , Cmd.none
     )
@@ -228,8 +235,15 @@ update msg model =
                     , indicators_ = model.indicators
                     , indicators = updateIndicators updatedWods
                 }
-                    ! [ List.filterMap getSerializedResult updatedWods
-                            |> Storage.saveWods
+                    ! [ case model.profile of
+                            Authorized profile ->
+                                ( profile.userUid
+                                , List.filterMap getSerializedResult updatedWods
+                                )
+                                    |> Ports.saveWods
+
+                            NotAuthorized ->
+                                Cmd.none
                       ]
 
         GetWods wods ->
@@ -244,13 +258,13 @@ update msg model =
                     | values = savedWods
                     , indicators = updateIndicators updatedWods
                 }
-                    ! [ Storage.updateInputFields ()]
+                    ! [ Ports.updateInputFields () ]
 
         SignIn ->
-            model ! [ Storage.signIn () ]
+            model ! [ Ports.signIn () ]
 
         SignedIn profile ->
-            { model | profile = profile } ! []
+            { model | profile = Authorized profile } ! []
 
         none ->
             model ! []
@@ -384,71 +398,85 @@ getIndicator name1 value oldValue =
     }
 
 
-viewProfile : Profile -> List (Html Msg)
-viewProfile profile =
-    [ div [ class "user-details grey light-2 z-depth-2" ]
-        [ div [ class "row valign-wrapper" ]
-            [ div [ class "col s4 m4 l4 offset-l1" ]
-                [ img
-                    [ class "circle responsive-img valign profile-image"
-                    , Html.Attributes.src <|
-                        Maybe.withDefault
-                            "http://www.i-dedicate.com/media/profile_images/default.png"
-                            profile.profilePic
-                    ]
-                    []
-                ]
-            , div [ class "col s8 m8 l6" ]
-                [ span [ class "card-title" ]
-                    [ text <|
-                        Maybe.withDefault "Noname CRSFT amateur"
-                            profile.displayName
-                    ]
-                ]
-            , case profile.displayName of
-                Just _ ->
-                    text ""
+viewProfile : AuthorizationState -> List (Html Msg)
+viewProfile state =
+    let
+        defaultPic =
+            "http://www.i-dedicate.com/media/profile_images/default.png"
 
-                Nothing ->
-                    div [ class "card-action" ]
-                        [ a
-                            [ id "signin"
-                            , onClick SignIn
-                            , class "waves-effect waves-light btn"
-                            ]
-                            [ text "Sign In" ]
+        profilePic =
+            case state of
+                NotAuthorized ->
+                    defaultPic
+
+                Authorized profile ->
+                    Maybe.withDefault defaultPic profile.profilePic
+
+        displayName =
+            case state of
+                NotAuthorized ->
+                    "Anonymous"
+
+                Authorized profile ->
+                    Maybe.withDefault "Anonymous" profile.displayName
+    in
+        [ div [ class "user-details grey light-2 z-depth-2" ]
+            [ div [ class "row valign-wrapper" ]
+                [ div [ class "col s4 m4 l4 offset-l1" ]
+                    [ img
+                        [ class "circle responsive-img valign profile-image"
+                        , Html.Attributes.src profilePic
                         ]
+                        []
+                    ]
+                , div [ class "col s8 m8 l6" ]
+                    [ span [ class "card-title" ]
+                        [ text displayName ]
+                    ]
+                , case state of
+                    Authorized _ ->
+                        text ""
+
+                    NotAuthorized ->
+                        div [ class "card-action" ]
+                            [ a
+                                [ id "signin"
+                                , onClick SignIn
+                                , class "waves-effect waves-light btn"
+                                ]
+                                [ text "Sign In" ]
+                            ]
+                ]
             ]
-        ]
-    , div [ class "card blue darken-4" ]
-        [ div [ class "card-content white-text" ]
-            [ toHtml []
-                """Your FitScore is 74 and you improved what is OK.
+        , div [ class "card blue darken-4" ]
+            [ div [ class "card-content white-text" ]
+                [ toHtml []
+                    """Your FitScore is 74 and you improved what is OK.
                                **We know how to move you further**"""
+                ]
+            , div [ class "card-action" ]
+                [ a [ href "#" ] [ text "Learn More" ] ]
             ]
-        , div [ class "card-action" ]
-            [ a [ href "#" ] [ text "Learn More" ] ]
-        ]
-    , div [ class "card grey lighten-5" ]
-        [ div [ class "card-content" ]
-            [ toHtml []
-                """**41 points for weightlifting** means you have
+        , div [ class "card grey lighten-5" ]
+            [ div [ class "card-content" ]
+                [ toHtml []
+                    """**41 points for weightlifting** means you have
                             to do more here. We recommend you to focus on
                             Cleans & Squats technique, then increase weight"""
+                ]
+            , div [ class "card-action" ]
+                [ a [ href "#" ] [ text "Got it" ] ]
             ]
-        , div [ class "card-action" ]
-            [ a [ href "#" ] [ text "Got it" ] ]
-        ]
-    , div [ class "card grey lighten-5" ]
-        [ div [ class "card-content" ]
-            [ toHtml []
-                """**You're doing great,** but you have at least
+        , div [ class "card grey lighten-5" ]
+            [ div [ class "card-content" ]
+                [ toHtml []
+                    """**You're doing great,** but you have at least
                             **2 areas** need your attention"""
+                ]
+            , div [ class "card-action" ]
+                [ a [ href "#" ] [ text "Got it" ] ]
             ]
-        , div [ class "card-action" ]
-            [ a [ href "#" ] [ text "Got it" ] ]
         ]
-    ]
 
 
 
@@ -457,7 +485,7 @@ viewProfile profile =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [ Storage.getWods GetWods, Storage.signedIn SignedIn ]
+    Sub.batch [ Ports.getWods GetWods, Ports.signedIn SignedIn ]
 
 
 main : Program Never Model Msg
