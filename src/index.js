@@ -29,14 +29,16 @@ firebase.auth().onAuthStateChanged((user) => {
             identifier: user.email,
             userUid: user.uid
         });
+
+        firebase.database().ref('users/' + user.uid + '/results/').once('value')
+            .then(function (snapshot) {
+                var wods = snapshot.val();
+
+                if (wods)
+                    myapp.ports.getWods.send(wods);
+            });
     }
 });
-
-firebase.database().ref('/users/' + '0').once('value')
-    .then(function (snapshot) {
-        var wods = snapshot.val();
-        myapp.ports.getWods.send(wods);
-    });
 
 firebase.auth()
     .getRedirectResult()
@@ -55,7 +57,7 @@ firebase.auth()
     });
 
 myapp.ports.saveWods.subscribe(function ([uuid, wods]) {
-    firebase.database().ref('users/' + uuid).set(wods);
+    firebase.database().ref('users/' + uuid + '/results/').set(wods);
     Materialize.toast('Results saved', 4000);
 });
 
