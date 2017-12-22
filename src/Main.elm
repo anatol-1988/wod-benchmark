@@ -4,13 +4,14 @@ import Html exposing (Html, text, div, img, ul, li, option, label, h3)
 import Html exposing (h4, i, button, span, p, a)
 import Html.Attributes exposing (src, type_, min, max, value, class, id, href)
 import Html.Events exposing (onInput, onClick, onMouseDown)
+import Json.Decode as Decode exposing (Value)
 import List
 import String exposing (toInt)
 import Result
 import Wods exposing (Wod, WodType(..), normalize, WodId)
 import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
-import Markdown exposing (toHtml)
+import Profile exposing (Profile, AuthorizationState(..), Gender(..))
 import Platform exposing (Task)
 import Ports
 import Dict exposing (Dict, empty)
@@ -69,14 +70,6 @@ type alias Indicators =
     }
 
 
-type alias Profile =
-    { displayName : Maybe String
-    , profilePic : Maybe String
-    , identifier : String
-    , userUid : String
-    }
-
-
 type alias Model =
     { wods : List Wod
     , values : Dict String String
@@ -84,11 +77,6 @@ type alias Model =
     , indicators_ : Indicators
     , profile : AuthorizationState
     }
-
-
-type AuthorizationState
-    = NotAuthorized
-    | Authorized Profile
 
 
 init : ( Model, Cmd Msg )
@@ -107,7 +95,7 @@ init =
             , power = Nothing
             , total = Nothing
             }
-      , profile = NotAuthorized
+      , profile = NotAuthorized Undefinite
       }
     , Cmd.none
     )
@@ -242,7 +230,7 @@ update msg model =
                                 )
                                     |> Ports.saveWods
 
-                            NotAuthorized ->
+                            NotAuthorized _ ->
                                 Cmd.none
                       ]
 
@@ -401,26 +389,31 @@ getIndicator name1 value oldValue =
 viewProfile : AuthorizationState -> List (Html Msg)
 viewProfile state =
     let
-        defaultPic =
-            "http://www.i-dedicate.com/media/profile_images/default.png"
+        defaultMalePic =
+            "https://i.imgur.com/icElw27.png"
 
         profilePic =
             case state of
-                NotAuthorized ->
-                    defaultPic
+                NotAuthorized gender ->
+                    case gender of
+                        Undefinite ->
+                            defaultMalePic
+
+                        Male ->
+                            defaultMalePic
 
                 Authorized profile ->
-                    Maybe.withDefault defaultPic profile.profilePic
+                    Maybe.withDefault defaultMalePic profile.profilePic
 
         displayName =
             case state of
-                NotAuthorized ->
+                NotAuthorized _ ->
                     "Anonymous"
 
                 Authorized profile ->
                     Maybe.withDefault "Anonymous" profile.displayName
     in
-        [ div [ class "user-details grey light-2 z-depth-2" ]
+        [ div [ class "user-details grey lighten-3" ]
             [ div [ class "row valign-wrapper" ]
                 [ div [ class "col s4 m4 l4 offset-l1" ]
                     [ img
@@ -437,7 +430,7 @@ viewProfile state =
                     Authorized _ ->
                         text ""
 
-                    NotAuthorized ->
+                    NotAuthorized _ ->
                         div [ class "card-action" ]
                             [ a
                                 [ id "signin"
@@ -447,34 +440,32 @@ viewProfile state =
                                 [ text "Sign In" ]
                             ]
                 ]
-            ]
-        , div [ class "card blue darken-4" ]
-            [ div [ class "card-content white-text" ]
-                [ toHtml []
-                    """Your FitScore is 74 and you improved what is OK.
-                               **We know how to move you further**"""
+            , div [ class "row" ]
+                [ div [ class "col s4 m4 l4 offset-l1" ]
+                    [ Html.form []
+                        [ p []
+                            [ Html.input
+                                [ Html.Attributes.name "gender"
+                                , type_ "radio"
+                                , id "male"
+                                ]
+                                []
+                            , Html.label [ Html.Attributes.for "male" ]
+                                [ text "Male" ]
+                            ]
+                        , p []
+                            [ Html.input
+                                [ Html.Attributes.name "gender"
+                                , type_ "radio"
+                                , id "female"
+                                ]
+                                []
+                            , Html.label [ Html.Attributes.for "female" ]
+                                [ text "Female" ]
+                            ]
+                        ]
+                    ]
                 ]
-            , div [ class "card-action" ]
-                [ a [ href "#" ] [ text "Learn More" ] ]
-            ]
-        , div [ class "card grey lighten-5" ]
-            [ div [ class "card-content" ]
-                [ toHtml []
-                    """**41 points for weightlifting** means you have
-                            to do more here. We recommend you to focus on
-                            Cleans & Squats technique, then increase weight"""
-                ]
-            , div [ class "card-action" ]
-                [ a [ href "#" ] [ text "Got it" ] ]
-            ]
-        , div [ class "card grey lighten-5" ]
-            [ div [ class "card-content" ]
-                [ toHtml []
-                    """**You're doing great,** but you have at least
-                            **2 areas** need your attention"""
-                ]
-            , div [ class "card-action" ]
-                [ a [ href "#" ] [ text "Got it" ] ]
             ]
         ]
 
@@ -485,7 +476,12 @@ viewProfile state =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [ Ports.getWods GetWods, Ports.signedIn SignedIn ]
+    Sub.batch [ Ports.getWods GetWods, Sub.map SignedIn sessionChange ]
+
+
+sessionChange : Sub (Maybe Profile)
+sessionChange =
+    Ports.onSignedIn (Decode.decodeValue Profile.decoder >> Result.toMaybe)
 
 
 main : Program Never Model Msg
