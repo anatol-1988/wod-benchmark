@@ -3,11 +3,11 @@ module Profile
         ( Profile
         , AuthorizationState(..)
         , Gender(..)
-        , decoder
+        , decode
         )
 
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline as Pipeline exposing (decode, required)
+import Json.Decode.Pipeline as Pipeline exposing (required)
 
 
 type alias Profile =
@@ -29,24 +29,32 @@ type Gender
     | Male
     | Female
 
-decoderGender : Decoder Gender
-decoderGender toDecode =
-    let
-        value = Decode.decodeString Decode.string toDecode
-    in
-        case value of
-            Ok name -> 
-                case name of
-                    "undefinite" -> Undefinite
-                    "male" -> Male
-                    "female" -> Female
-            Err _ -> Undefinite
 
-decoder : Decoder Profile
-decoder =
-    decode Profile
+decodeGender : Decoder Gender
+decodeGender =
+    Decode.string
+        |> Decode.andThen
+            (\str ->
+                case str of
+                    "undefinite" ->
+                        Decode.succeed Undefinite
+
+                    "male" ->
+                        Decode.succeed Male
+
+                    "female" ->
+                        Decode.succeed Female
+
+                    str ->
+                        Decode.fail <| "Unknown gender " ++ str
+            )
+
+
+decode : Decoder Profile
+decode =
+    Pipeline.decode Profile
         |> required "displayName" (Decode.nullable Decode.string)
         |> required "profilePic" (Decode.nullable Decode.string)
         |> required "identifier" Decode.string
-        |> required "userId" Decode.string
-        |> required "gender" decoderGender
+        |> required "userUid" Decode.string
+        |> required "gender" decodeGender

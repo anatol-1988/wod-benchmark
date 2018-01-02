@@ -109,10 +109,11 @@ type Msg
     = NoOp
     | OnChangeValue WodId String
     | OnChangeInterval WodId String
+    | OnChangeGender Gender
     | CalcAll
     | GetWods (List ( String, String ))
     | SignIn
-    | SignedIn Profile
+    | SignedIn (Maybe Profile)
 
 
 setWodValue : String -> String -> Wod -> Wod
@@ -252,7 +253,26 @@ update msg model =
             model ! [ Ports.signIn () ]
 
         SignedIn profile ->
-            { model | profile = Authorized profile } ! []
+            (case profile of
+                Just p ->
+                    { model | profile = Authorized p }
+
+                Nothing ->
+                    model
+            )
+                ! []
+
+        OnChangeGender gender ->
+            { model
+                | profile =
+                    case model.profile of
+                        Authorized profile ->
+                            Authorized { profile | gender = gender }
+
+                        NotAuthorized _ ->
+                            NotAuthorized gender
+            }
+                ! []
 
         none ->
             model ! []
@@ -392,6 +412,9 @@ viewProfile state =
         defaultMalePic =
             "https://i.imgur.com/icElw27.png"
 
+        defaultFemalePic =
+            "https://i.imgur.com/aoiCOAo.png"
+
         profilePic =
             case state of
                 NotAuthorized gender ->
@@ -401,6 +424,9 @@ viewProfile state =
 
                         Male ->
                             defaultMalePic
+
+                        Female ->
+                            defaultFemalePic
 
                 Authorized profile ->
                     Maybe.withDefault defaultMalePic profile.profilePic
@@ -448,6 +474,7 @@ viewProfile state =
                                 [ Html.Attributes.name "gender"
                                 , type_ "radio"
                                 , id "male"
+                                , onClick (OnChangeGender Male)
                                 ]
                                 []
                             , Html.label [ Html.Attributes.for "male" ]
@@ -458,6 +485,7 @@ viewProfile state =
                                 [ Html.Attributes.name "gender"
                                 , type_ "radio"
                                 , id "female"
+                                , onClick (OnChangeGender Female)
                                 ]
                                 []
                             , Html.label [ Html.Attributes.for "female" ]
@@ -481,7 +509,7 @@ subscriptions model =
 
 sessionChange : Sub (Maybe Profile)
 sessionChange =
-    Ports.onSignedIn (Decode.decodeValue Profile.decoder >> Result.toMaybe)
+    Ports.onSignedIn (Decode.decodeValue Profile.decode >> Result.toMaybe)
 
 
 main : Program Never Model Msg

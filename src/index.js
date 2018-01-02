@@ -17,17 +17,17 @@ import registerServiceWorker from './registerServiceWorker';
 var myapp = Main.embed(document.getElementById('root'));
 var provider = new firebase.auth.FacebookAuthProvider();
 var database = firebase.database();
-provider.addScope('user_birthday');
 firebase.auth().useDeviceLanguage();
 registerServiceWorker();
 
 firebase.auth().onAuthStateChanged((user) => {
     if (user) {
-        myapp.ports.signedIn.send({
+        myapp.ports.onSignedIn.send({
             displayName: user.displayName,
             profilePic: user.photoURL,
             identifier: user.email,
-            userUid: user.uid
+            userUid: user.uid,
+            gender: "male"
         });
 
         firebase.database().ref('users/' + user.uid + '/results/').once('value')
@@ -47,7 +47,8 @@ firebase.auth()
             var token = result.credential.accessToken;
         }
 
-        var user = result.user;
+        var profile = result.additionalUserInfo.profile;
+        var gender = profile.gender;
     })
     .catch(function (error) {
         var errorCode = error.code;
