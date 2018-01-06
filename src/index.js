@@ -27,7 +27,7 @@ firebase.auth().onAuthStateChanged((user) => {
             profilePic: user.photoURL,
             identifier: user.email,
             userUid: user.uid,
-            gender: "male"
+            gender: "undefinite"
         });
 
         firebase.database().ref('users/' + user.uid + '/results/').once('value')
@@ -49,6 +49,7 @@ firebase.auth()
 
         var profile = result.additionalUserInfo.profile;
         var gender = profile.gender;
+        myapp.ports.onGenderChanged.send(gender);
     })
     .catch(function (error) {
         var errorCode = error.code;

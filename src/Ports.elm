@@ -5,6 +5,7 @@ port module Ports
         , signIn
         , onSignedIn
         , updateInputFields
+        , onGenderChanged
         )
 
 import Json.Encode exposing (Value)
@@ -20,6 +21,9 @@ port signIn : () -> Cmd msg
 
 
 port onSignedIn : (Value -> msg) -> Sub msg
+
+
+port onGenderChanged : (String -> msg) -> Sub msg
 
 
 port updateInputFields : () -> Cmd msg

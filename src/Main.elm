@@ -3,6 +3,7 @@ module Main exposing (..)
 import Html exposing (Html, text, div, img, ul, li, option, label, h3)
 import Html exposing (h4, i, button, span, p, a)
 import Html.Attributes exposing (src, type_, min, max, value, class, id, href)
+import Html.Attributes exposing (checked)
 import Html.Events exposing (onInput, onClick, onMouseDown)
 import Json.Decode as Decode exposing (Value)
 import List
@@ -415,18 +416,23 @@ viewProfile state =
         defaultFemalePic =
             "https://i.imgur.com/aoiCOAo.png"
 
+        genderSelector =
+            case state of
+                NotAuthorized gender ->
+                    gender
+
+                Authorized profile ->
+                    profile.gender
+
         profilePic =
             case state of
                 NotAuthorized gender ->
                     case gender of
-                        Undefinite ->
-                            defaultMalePic
-
-                        Male ->
-                            defaultMalePic
-
                         Female ->
                             defaultFemalePic
+
+                        _ ->
+                            defaultMalePic
 
                 Authorized profile ->
                     Maybe.withDefault defaultMalePic profile.profilePic
@@ -474,6 +480,7 @@ viewProfile state =
                                 [ Html.Attributes.name "gender"
                                 , type_ "radio"
                                 , id "male"
+                                , checked (genderSelector == Male)
                                 , onClick (OnChangeGender Male)
                                 ]
                                 []
@@ -485,6 +492,7 @@ viewProfile state =
                                 [ Html.Attributes.name "gender"
                                 , type_ "radio"
                                 , id "female"
+                                , checked (genderSelector == Female)
                                 , onClick (OnChangeGender Female)
                                 ]
                                 []
@@ -504,12 +512,21 @@ viewProfile state =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [ Ports.getWods GetWods, Sub.map SignedIn sessionChange ]
+    Sub.batch
+        [ Ports.getWods GetWods
+        , Sub.map SignedIn sessionChange
+        , Sub.map OnChangeGender genderChange
+        ]
 
 
 sessionChange : Sub (Maybe Profile)
 sessionChange =
     Ports.onSignedIn (Decode.decodeValue Profile.decode >> Result.toMaybe)
+
+
+genderChange : Sub Gender
+genderChange =
+    Ports.onGenderChanged Profile.stringToGender
 
 
 main : Program Never Model Msg

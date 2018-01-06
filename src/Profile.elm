@@ -4,6 +4,7 @@ module Profile
         , AuthorizationState(..)
         , Gender(..)
         , decode
+        , stringToGender
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -30,24 +31,23 @@ type Gender
     | Female
 
 
+stringToGender : String -> Gender
+stringToGender str =
+    case str of
+        "male" ->
+            Male
+
+        "female" ->
+            Female
+
+        _ ->
+            Undefinite
+
+
 decodeGender : Decoder Gender
 decodeGender =
     Decode.string
-        |> Decode.andThen
-            (\str ->
-                case str of
-                    "undefinite" ->
-                        Decode.succeed Undefinite
-
-                    "male" ->
-                        Decode.succeed Male
-
-                    "female" ->
-                        Decode.succeed Female
-
-                    str ->
-                        Decode.fail <| "Unknown gender " ++ str
-            )
+        |> Decode.andThen (\str -> Decode.succeed <| stringToGender str)
 
 
 decode : Decoder Profile
