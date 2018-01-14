@@ -77,6 +77,7 @@ type alias Model =
     , indicators : Indicators
     , indicators_ : Indicators
     , profile : AuthorizationState
+    , gender : Gender
     }
 
 
@@ -96,7 +97,8 @@ init =
             , power = Nothing
             , total = Nothing
             }
-      , profile = NotAuthorized Undefinite
+      , profile = NotAuthorized
+      , gender = Undefinite
       }
     , Cmd.none
     )
@@ -232,7 +234,7 @@ update msg model =
                                 )
                                     |> Ports.saveWods
 
-                            NotAuthorized _ ->
+                            NotAuthorized ->
                                 Cmd.none
                       ]
 
@@ -264,16 +266,7 @@ update msg model =
                 ! []
 
         OnChangeGender gender ->
-            { model
-                | profile =
-                    case model.profile of
-                        Authorized profile ->
-                            Authorized { profile | gender = gender }
-
-                        NotAuthorized _ ->
-                            NotAuthorized gender
-            }
-                ! []
+            { model | gender = gender } ! []
 
         none ->
             model ! []
@@ -395,7 +388,7 @@ view model =
                 ]
             ]
         , div [ class "col s12 m3" ]
-            [ div [ class "row" ] <| viewProfile model.profile ]
+            [ div [ class "row" ] <| viewProfile model.profile model.gender ]
         ]
 
 
@@ -407,8 +400,8 @@ getIndicator name1 value oldValue =
     }
 
 
-viewProfile : AuthorizationState -> List (Html Msg)
-viewProfile state =
+viewProfile : AuthorizationState -> Gender -> List (Html Msg)
+viewProfile state gender =
     let
         defaultMalePic =
             "https://i.imgur.com/icElw27.png"
@@ -416,17 +409,9 @@ viewProfile state =
         defaultFemalePic =
             "https://i.imgur.com/aoiCOAo.png"
 
-        genderSelector =
-            case state of
-                NotAuthorized gender ->
-                    gender
-
-                Authorized profile ->
-                    profile.gender
-
         profilePic =
             case state of
-                NotAuthorized gender ->
+                NotAuthorized ->
                     case gender of
                         Female ->
                             defaultFemalePic
@@ -439,7 +424,7 @@ viewProfile state =
 
         displayName =
             case state of
-                NotAuthorized _ ->
+                NotAuthorized ->
                     "Anonymous"
 
                 Authorized profile ->
@@ -462,7 +447,7 @@ viewProfile state =
                     Authorized _ ->
                         text ""
 
-                    NotAuthorized _ ->
+                    NotAuthorized ->
                         div [ class "card-action" ]
                             [ a
                                 [ id "signin"
@@ -480,7 +465,7 @@ viewProfile state =
                                 [ Html.Attributes.name "gender"
                                 , type_ "radio"
                                 , id "male"
-                                , checked (genderSelector == Male)
+                                , checked (gender == Male)
                                 , onClick (OnChangeGender Male)
                                 ]
                                 []
@@ -492,7 +477,7 @@ viewProfile state =
                                 [ Html.Attributes.name "gender"
                                 , type_ "radio"
                                 , id "female"
-                                , checked (genderSelector == Female)
+                                , checked (gender == Female)
                                 , onClick (OnChangeGender Female)
                                 ]
                                 []

@@ -16,12 +16,11 @@ type alias Profile =
     , profilePic : Maybe String
     , identifier : String
     , userUid : String
-    , gender : Gender
     }
 
 
 type AuthorizationState
-    = NotAuthorized Gender
+    = NotAuthorized
     | Authorized Profile
 
 
@@ -46,8 +45,7 @@ stringToGender str =
 
 decodeGender : Decoder Gender
 decodeGender =
-    Decode.string
-        |> Decode.andThen (\str -> Decode.succeed <| stringToGender str)
+    Decode.string |> Decode.andThen (Decode.succeed << stringToGender)
 
 
 decode : Decoder Profile
@@ -57,4 +55,3 @@ decode =
         |> required "profilePic" (Decode.nullable Decode.string)
         |> required "identifier" Decode.string
         |> required "userUid" Decode.string
-        |> required "gender" decodeGender
