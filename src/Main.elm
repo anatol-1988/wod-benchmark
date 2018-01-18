@@ -2,10 +2,13 @@ module Main exposing (..)
 
 import Html exposing (Html, text, div, img, ul, li, option, label, h3)
 import Html exposing (h4, i, button, span, p, a)
+import Svg
+import Svg.Attributes
 import Html.Attributes exposing (src, type_, min, max, value, class, id, href)
 import Html.Attributes exposing (checked)
 import Html.Events exposing (onInput, onClick, onMouseDown)
 import Json.Decode as Decode exposing (Value)
+import Json.Encode
 import List
 import String exposing (toInt)
 import Result
@@ -400,6 +403,12 @@ getIndicator name1 value oldValue =
     }
 
 
+iconSvg : String -> Html Msg
+iconSvg name =
+    Svg.svg [ Svg.Attributes.class "icon" ]
+        [ Svg.use [ Svg.Attributes.xlinkHref <| "/sprite.svg#" ++ name ] [] ]
+
+
 viewProfile : AuthorizationState -> Gender -> List (Html Msg)
 viewProfile state gender =
     let
@@ -439,23 +448,27 @@ viewProfile state gender =
                         ]
                         []
                     ]
-                , div [ class "col s8 m8 l6" ]
+                , div [ class "col s8 m8 l8" ]
                     [ span [ class "card-title" ]
                         [ text displayName ]
                     ]
-                , case state of
-                    Authorized _ ->
-                        text ""
+                ]
+            , div [ class "row" ]
+                [ div [ class "col s4 m4 l12" ]
+                    [ case state of
+                        Authorized _ ->
+                            text ""
 
-                    NotAuthorized ->
-                        div [ class "card-action" ]
-                            [ a
-                                [ id "signin"
-                                , onClick SignIn
-                                , class "waves-effect waves-light btn"
+                        NotAuthorized ->
+                            div [ class "card-action" ]
+                                [ a
+                                    [ id "signin"
+                                    , onClick SignIn
+                                    , class "waves-effect waves-light btn social"
+                                    ]
+                                    [ iconSvg "fb", text "Sign In" ]
                                 ]
-                                [ text "Sign In" ]
-                            ]
+                    ]
                 ]
             , div [ class "row" ]
                 [ div [ class "col s4 m4 l4 offset-l1" ]
