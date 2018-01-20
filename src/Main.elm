@@ -405,8 +405,13 @@ getIndicator name1 value oldValue =
 
 iconSvg : String -> Html Msg
 iconSvg name =
-    Svg.svg [ Svg.Attributes.class "icon" ]
-        [ Svg.use [ Svg.Attributes.xlinkHref <| "/sprite.svg#" ++ name ] [] ]
+    Html.span [ class "button_icon" ]
+        [ Svg.svg [ Svg.Attributes.class "icon" ]
+            [ Svg.use
+                [ Svg.Attributes.xlinkHref <| "/sprite.svg#" ++ name ]
+                []
+            ]
+        ]
 
 
 viewProfile : AuthorizationState -> Gender -> List (Html Msg)
@@ -454,21 +459,18 @@ viewProfile state gender =
                     ]
                 ]
             , div [ class "row" ]
-                [ div [ class "col s4 m4 l12" ]
-                    [ case state of
-                        Authorized _ ->
-                            text ""
+                [ case state of
+                    Authorized _ ->
+                        text ""
 
-                        NotAuthorized ->
-                            div [ class "card-action" ]
-                                [ a
-                                    [ id "signin"
-                                    , onClick SignIn
-                                    , class "waves-effect waves-light btn social"
-                                    ]
-                                    [ iconSvg "fb", text "Sign In" ]
-                                ]
-                    ]
+                    NotAuthorized ->
+                        a
+                            [ id "signin"
+                            , onClick SignIn
+                            , class
+                                "waves-effect waves-light btn social facebook"
+                            ]
+                            [ iconSvg "fb", text "Sign In" ]
                 ]
             , div [ class "row" ]
                 [ div [ class "col s4 m4 l4 offset-l1" ]

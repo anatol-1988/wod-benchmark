@@ -115,10 +115,20 @@ span.credits {
 }
 
 .btn.social svg {
-  padding: 0 1rem;
-  margin-right: 0.5rem;
+  transform: translateY(-2px);
 }
 
 .btn.social > :first-child {
   border-right: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.button_icon {
+  margin-right: 10px;
+  display: inline-block;
+  padding: 0 10px;
+}
+
+.facebook {
+  background-color: #3b5998 !important;
+  color: #fff !important;
 }
