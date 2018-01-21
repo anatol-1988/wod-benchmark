@@ -13,28 +13,20 @@ module Wods
 
 import List exposing (foldl)
 import Time exposing (Time, second, minute)
-import Date exposing (toTime)
 import Arithmetic exposing (cubeRoot)
 
 
-type alias RangeInt =
-    { worst : Int
-    , best : Int
-    , value : Maybe Int
-    }
-
-
-type alias RangeTime =
-    { worst : Time
-    , best : Time
-    , value : Maybe Time
+type alias Range a =
+    { worst : a
+    , best : a
+    , value : Maybe a
     }
 
 
 type WodType
-    = ForTime RangeTime
-    | PRInfo RangeInt
-    | ForReps RangeInt
+    = ForTime (Range Time)
+    | PRInfo (Range Int)
+    | ForReps (Range Int)
 
 
 type alias WodId =
