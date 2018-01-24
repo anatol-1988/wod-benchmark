@@ -8,7 +8,6 @@ import Html.Attributes exposing (src, type_, min, max, value, class, id, href)
 import Html.Attributes exposing (checked)
 import Html.Events exposing (onInput, onClick, onMouseDown)
 import Json.Decode as Decode exposing (Value)
-import Json.Encode
 import List
 import String exposing (toInt)
 import Result
@@ -177,12 +176,25 @@ updateWods values wods =
         wods
 
 
-updateIndicators : List Wod -> Indicators
-updateIndicators wods =
-    { cardio = Wods.getCardio wods
-    , endurance = Wods.getEndurance wods
-    , power = Wods.getPower wods
-    , total = Wods.getTotal wods
+wodGender : Profile.Gender -> Wods.Gender
+wodGender profile =
+    case profile of
+        Male ->
+            Wods.Male
+
+        Female ->
+            Wods.Female
+
+        Undefinite ->
+            Wods.Male
+
+
+updateIndicators : List Wod -> Gender -> Indicators
+updateIndicators wods gender =
+    { cardio = Wods.getCardio wods <| wodGender gender
+    , endurance = Wods.getEndurance wods <| wodGender gender
+    , power = Wods.getPower wods <| wodGender gender
+    , total = Wods.getTotal wods <| wodGender gender
     }
 
 
@@ -228,7 +240,7 @@ update msg model =
                 { model
                     | wods = updatedWods
                     , indicators_ = model.indicators
-                    , indicators = updateIndicators updatedWods
+                    , indicators = updateIndicators updatedWods model.gender
                 }
                     ! [ case model.profile of
                             Authorized profile ->
@@ -251,7 +263,7 @@ update msg model =
             in
                 { model
                     | values = savedWods
-                    , indicators = updateIndicators updatedWods
+                    , indicators = updateIndicators updatedWods model.gender
                 }
                     ! [ Ports.updateInputFields () ]
 
@@ -269,7 +281,11 @@ update msg model =
                 ! []
 
         OnChangeGender gender ->
-            { model | gender = gender } ! []
+            { model
+                | gender = gender
+                , indicators = updateIndicators model.wods gender
+            }
+                ! []
 
         none ->
             model ! []
@@ -279,8 +295,18 @@ update msg model =
 ---- VIEW ----
 
 
-renderInput : Maybe String -> Wod -> Html Msg
-renderInput value wod =
+genderLimits : Wods.Range a -> Profile.Gender -> Wods.Limits a
+genderLimits range gender =
+    case wodGender gender of
+        Wods.Male ->
+            range.man
+
+        Wods.Female ->
+            range.woman
+
+
+renderInput : Maybe String -> Wod -> Profile.Gender -> Html Msg
+renderInput value wod gender =
     div [ class "col s12" ]
         [ (div [ Html.Attributes.class "input-field" ] <|
             (case wod.range of
@@ -299,8 +325,8 @@ renderInput value wod =
                     [ Html.input
                         [ type_ "number"
                         , Html.Attributes.id wod.id
-                        , Html.Attributes.min <| toString range.worst
-                        , Html.Attributes.max <| toString range.best
+                        , Html.Attributes.min <| toString (genderLimits range gender).worst
+                        , Html.Attributes.max <| toString (genderLimits range gender).best
                         , onInput (OnChangeValue wod.id)
                         , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
@@ -311,8 +337,8 @@ renderInput value wod =
                     [ Html.input
                         [ type_ "number"
                         , Html.Attributes.id wod.id
-                        , Html.Attributes.min <| toString range.worst
-                        , Html.Attributes.max <| toString range.best
+                        , Html.Attributes.min <| toString (genderLimits range gender).worst
+                        , Html.Attributes.max <| toString (genderLimits range gender).best
                         , onInput (OnChangeValue wod.id)
                         , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
@@ -348,7 +374,7 @@ renderInputs model =
         |> List.map
             (\w ->
                 div [ Html.Attributes.class "row" ]
-                    [ renderInput (Dict.get w.id model.values) w ]
+                    [ renderInput (Dict.get w.id model.values) w model.gender ]
             )
 
 
