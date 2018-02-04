@@ -11,10 +11,10 @@ import Json.Decode as Decode exposing (Value)
 import List
 import String exposing (toInt)
 import Result
-import Wods exposing (Wod, WodType(..), normalize, WodId)
+import Wods exposing (Wod, WodType(..), normalize, WodId, kg, lb)
 import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
-import Profile exposing (Profile, AuthorizationState(..), Gender(..))
+import Profile exposing (Profile, AuthorizationState(..), Gender(..), Units(..))
 import Platform exposing (Task)
 import Ports
 import Dict exposing (Dict, empty)
@@ -80,6 +80,7 @@ type alias Model =
     , indicators_ : Indicators
     , profile : AuthorizationState
     , gender : Gender
+    , units : Units
     }
 
 
@@ -101,6 +102,7 @@ init =
             }
       , profile = NotAuthorized
       , gender = Undefinite
+      , units = UndefiniteUnits
       }
     , Cmd.none
     )
@@ -115,14 +117,15 @@ type Msg
     | OnChangeValue WodId String
     | OnChangeInterval WodId String
     | OnChangeGender Gender
+    | OnChangeUnits Units
     | CalcAll
     | GetWods (List ( String, String ))
     | SignIn
     | SignedIn (Maybe Profile)
 
 
-setWodValue : String -> String -> Wod -> Wod
-setWodValue id value wod =
+setWodValue : String -> String -> Units -> Wod -> Wod
+setWodValue id value units wod =
     { wod
         | range =
             if wod.id == id then
@@ -141,7 +144,20 @@ setWodValue id value wod =
                         PRInfo
                             { range
                                 | value =
-                                    Result.toMaybe <| toInt value
+                                    Maybe.map
+                                        (case units of
+                                            UndefiniteUnits ->
+                                                lb
+
+                                            Imperial ->
+                                                lb
+
+                                            Metric ->
+                                                kg
+                                        )
+                                    <|
+                                        Result.toMaybe <|
+                                            toInt value
                             }
             else
                 wod.range
@@ -165,12 +181,13 @@ getSerializedResult wod =
         Maybe.map (\v -> ( wod.id, v )) val
 
 
-updateWods : Dict WodId String -> List Wod -> List Wod
-updateWods values wods =
+updateWods : Dict WodId String -> List Wod -> Units -> List Wod
+updateWods values wods units =
     List.map
         (\w ->
             setWodValue w.id
                 (Maybe.withDefault "" <| Dict.get w.id values)
+                units
                 w
         )
         wods
@@ -235,7 +252,7 @@ update msg model =
         CalcAll ->
             let
                 updatedWods =
-                    updateWods model.values model.wods
+                    updateWods model.values model.wods model.units
             in
                 { model
                     | wods = updatedWods
@@ -259,7 +276,7 @@ update msg model =
                     Dict.fromList wods
 
                 updatedWods =
-                    updateWods savedWods model.wods
+                    updateWods savedWods model.wods model.units
             in
                 { model
                     | values = savedWods
@@ -287,6 +304,18 @@ update msg model =
             }
                 ! []
 
+        OnChangeUnits units ->
+            let
+                updatedWods =
+                    updateWods model.values model.wods units
+            in
+                { model
+                    | wods = updatedWods
+                    , units = units
+                    , indicators = updateIndicators updatedWods model.gender
+                }
+                    ! []
+
         none ->
             model ! []
 
@@ -305,8 +334,8 @@ genderLimits range gender =
             range.woman
 
 
-renderInput : Maybe String -> Wod -> Profile.Gender -> Html Msg
-renderInput value wod gender =
+renderInput : Maybe String -> Wod -> Profile.Gender -> Units -> Html Msg
+renderInput value wod gender units =
     div [ class "col s12" ]
         [ (div [ Html.Attributes.class "input-field" ] <|
             (case wod.range of
@@ -357,7 +386,15 @@ renderInput value wod gender =
                                     "mm:ss"
 
                                 PRInfo range ->
-                                    "kg"
+                                    case units of
+                                        UndefiniteUnits ->
+                                            "lb"
+
+                                        Imperial ->
+                                            "lb"
+
+                                        Metric ->
+                                            "kg"
 
                                 ForReps range ->
                                     "reps"
@@ -374,7 +411,11 @@ renderInputs model =
         |> List.map
             (\w ->
                 div [ Html.Attributes.class "row" ]
-                    [ renderInput (Dict.get w.id model.values) w model.gender ]
+                    [ renderInput (Dict.get w.id model.values)
+                        w
+                        model.gender
+                        model.units
+                    ]
             )
 
 
@@ -417,7 +458,9 @@ view model =
                 ]
             ]
         , div [ class "col s12 m3" ]
-            [ div [ class "row" ] <| viewProfile model.profile model.gender ]
+            [ div [ class "row" ] <|
+                viewProfile model.profile model.gender model.units
+            ]
         ]
 
 
@@ -440,8 +483,8 @@ iconSvg name =
         ]
 
 
-viewProfile : AuthorizationState -> Gender -> List (Html Msg)
-viewProfile state gender =
+viewProfile : AuthorizationState -> Gender -> Units -> List (Html Msg)
+viewProfile state gender units =
     let
         defaultMalePic =
             "https://i.imgur.com/icElw27.png"
@@ -524,6 +567,36 @@ viewProfile state gender =
                                 []
                             , Html.label [ Html.Attributes.for "female" ]
                                 [ text "Female" ]
+                            ]
+                        ]
+                    ]
+                ]
+            , div [ class "row" ]
+                [ div [ class "col s4 m4 l4 offset-l1" ]
+                    [ Html.form []
+                        [ p []
+                            [ Html.input
+                                [ Html.Attributes.name "units"
+                                , type_ "radio"
+                                , id "imperial"
+                                , checked (units == Imperial)
+                                , onClick (OnChangeUnits Imperial)
+                                ]
+                                []
+                            , Html.label [ Html.Attributes.for "imperial" ]
+                                [ text "Imperial" ]
+                            ]
+                        , p []
+                            [ Html.input
+                                [ Html.Attributes.name "units"
+                                , type_ "radio"
+                                , id "metric"
+                                , checked (units == Metric)
+                                , onClick (OnChangeUnits Metric)
+                                ]
+                                []
+                            , Html.label [ Html.Attributes.for "metric" ]
+                                [ text "Metric" ]
                             ]
                         ]
                     ]

@@ -3,6 +3,7 @@ module Profile
         ( Profile
         , AuthorizationState(..)
         , Gender(..)
+        , Units(..)
         , decode
         , stringToGender
         )
@@ -28,6 +29,8 @@ type Gender
     = Undefinite
     | Male
     | Female
+
+type Units = UndefiniteUnits | Imperial | Metric
 
 
 stringToGender : String -> Gender

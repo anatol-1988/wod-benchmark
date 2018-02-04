@@ -3,6 +3,8 @@ module Wods
         ( Wod
         , WodType(..)
         , Gender(Male, Female)
+        , kg
+        , lb
         , Range
         , Limits
         , wods
@@ -32,9 +34,94 @@ type alias Range a =
     }
 
 
+type WeightUnit
+    = Pound Int
+    | Kilogram Int
+
+kg : Int -> WeightUnit
+kg n = Kilogram n
+
+lb : Int -> WeightUnit
+lb n = Pound n
+
+poundsToKilograms : Int -> Int
+poundsToKilograms pounds =
+    round (0.45359237 * toFloat pounds)
+
+
+add : WeightUnit -> WeightUnit -> WeightUnit
+add unit1 unit2 =
+    case unit1 of
+        Pound s1 ->
+            case unit2 of
+                Pound s2 ->
+                    Pound (s1 + s2)
+
+                Kilogram s2 ->
+                    Kilogram ((poundsToKilograms s1) + s2)
+
+        Kilogram s1 ->
+            case unit2 of
+                Pound s2 ->
+                    Kilogram ((poundsToKilograms s2) + s1)
+
+                Kilogram s2 ->
+                    Kilogram (s1 + s2)
+
+
+div : WeightUnit -> WeightUnit -> WeightUnit
+div unit1 unit2 =
+    case unit1 of
+        Pound s1 ->
+            case unit2 of
+                Pound s2 ->
+                    Pound (s1 + s2)
+
+                Kilogram s2 ->
+                    Kilogram ((poundsToKilograms s1) + s2)
+
+        Kilogram s1 ->
+            case unit2 of
+                Pound s2 ->
+                    Kilogram ((poundsToKilograms s2) + s1)
+
+                Kilogram s2 ->
+                    Kilogram (s1 + s2)
+
+
+sub : WeightUnit -> WeightUnit -> WeightUnit
+sub unit1 unit2 =
+    case unit2 of
+        Pound s2 ->
+            add unit1 (lb -s2)
+
+        Kilogram s2 ->
+            add unit1 (kg -s2)
+
+
+divide : WeightUnit -> WeightUnit -> Float
+divide unit1 unit2 =
+    case unit1 of
+        Pound s1 ->
+            case unit2 of
+                Pound s2 ->
+                    toFloat s1 / toFloat s2
+
+                Kilogram s2 ->
+                    toFloat (poundsToKilograms s1) / toFloat s2
+
+        Kilogram s1 ->
+            case unit2 of
+                Pound s2 ->
+                    toFloat (poundsToKilograms s2) / toFloat s1
+
+                Kilogram s2 ->
+                    toFloat s1 / toFloat s2
+
+
 type WodType
     = ForTime (Range Time)
-    | PRInfo (Range Int)
+    | PRInfo (Range WeightUnit)
     | ForReps (Range Int)
 
 
@@ -106,8 +193,8 @@ wods =
       , power = 0.9
       , range =
             PRInfo
-                { man = { worst = 40, best = 215 }
-                , woman = { worst = 30, best = 205 }
+                { man = { worst = kg 40, best = kg 215 }
+                , woman = { worst = kg 30, best = kg 205 }
                 , value = Nothing
                 }
       }
@@ -118,8 +205,8 @@ wods =
       , power = 1.0
       , range =
             PRInfo
-                { man = { worst = 20, best = 170 }
-                , woman = { worst = 10, best = 160 }
+                { man = { worst = kg 20, best = kg 170 }
+                , woman = { worst = kg 10, best = kg 160 }
                 , value = Nothing
                 }
       }
@@ -130,8 +217,8 @@ wods =
       , power = 0.9
       , range =
             PRInfo
-                { man = { worst = 15, best = 140 }
-                , woman = { worst = 5, best = 120 }
+                { man = { worst = kg 15, best = kg 140 }
+                , woman = { worst = kg 5, best = kg 120 }
                 , value = Nothing
                 }
       }
@@ -142,8 +229,8 @@ wods =
       , power = 0.9
       , range =
             PRInfo
-                { man = { worst = 60, best = 260 }
-                , woman = { worst = 50, best = 240 }
+                { man = { worst = kg 60, best = kg 260 }
+                , woman = { worst = kg 50, best = kg 240 }
                 , value = Nothing
                 }
       }
@@ -213,7 +300,10 @@ getTotal wods gender =
         getRoot cardio power endurance =
             round <| cubeRoot (toFloat <| cardio * power * endurance)
     in
-        Maybe.map3 getRoot (getCardio wods gender) (getPower wods gender) (getEndurance wods gender)
+        Maybe.map3 getRoot
+            (getCardio wods gender)
+            (getPower wods gender)
+            (getEndurance wods gender)
 
 
 normalize : WodType -> Gender -> Maybe Int
@@ -237,8 +327,7 @@ normalize wod gender =
                 PRInfo range ->
                     Maybe.map
                         (\x ->
-                            (toFloat <| x - (genderLimits range).worst)
-                                / (toFloat <| (genderLimits range).best - (genderLimits range).worst)
+                            divide (sub x (genderLimits range).worst) (sub (genderLimits range).best (genderLimits range).worst)
                         )
                         range.value
 
