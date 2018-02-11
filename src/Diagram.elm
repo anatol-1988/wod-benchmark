@@ -1,7 +1,8 @@
 module Diagram exposing (plotBenchmarks, Size, Indicator)
 
-import Svg exposing (circle, svg, text_, text)
-import Svg.Attributes exposing (cx, cy, x, y, r, viewBox, height, width)
+import Svg exposing (Svg, circle, svg, text_, text, line, polyline)
+import Svg.Attributes exposing (cx, cy, x, y, r, viewBox, height, width, x1, x2)
+import Svg.Attributes exposing (y1, y2, points)
 import Svg.Attributes exposing (class, id, alignmentBaseline, textAnchor)
 import Html exposing (Html)
 
@@ -17,6 +18,100 @@ type alias Indicator =
     , score : Int
     , diff : Maybe Int
     }
+
+
+type alias Polar =
+    ( Float, Float )
+
+
+type alias Cartesian =
+    ( Int, Int )
+
+
+plotToPolar : Cartesian -> Cartesian -> Polar
+plotToPolar ( x, y ) ( centerX, centerY ) =
+    let
+        ( r, theta ) =
+            toPolar ( toFloat (x - centerX), toFloat (y - centerY) )
+    in
+        ( r, theta + pi / 2 )
+
+
+plotFromPolar : Polar -> Cartesian -> Cartesian
+plotFromPolar ( r, theta ) ( centerX, centerY ) =
+    let
+        ( x, y ) =
+            fromPolar ( r, theta - pi / 2 )
+    in
+        ( round x + centerX, round y + centerY )
+
+
+drawAxes : Cartesian -> Int -> List (Svg msg)
+drawAxes ( centerX, centerY ) num =
+    let
+        drawAxis angle =
+            let
+                ( x, y ) =
+                    plotFromPolar ( 100, angle ) ( centerX, centerY )
+            in
+                line
+                    [ y1 <| toString centerY
+                    , y2 <| toString y
+                    , x1 <| toString centerX
+                    , x2 <| toString x
+                    , class "diagram-axis"
+                    ]
+                    []
+
+        angles =
+            List.map (\n -> 2.0 * pi * toFloat n / toFloat num) <|
+                List.range 0 (num - 1)
+    in
+        List.map drawAxis angles
+
+
+zip =
+    List.map2 (,)
+
+
+drawTriangles : Cartesian -> List { a | score : Int } -> List (Svg msg)
+drawTriangles ( centerX, centerY ) values =
+    let
+        drawTriangle n p1 p2 p3 =
+            polyline
+                [ points
+                    ([ p1, p2, p3 ]
+                        |> List.map
+                            (\( x, y ) -> toString x ++ " " ++ toString y)
+                        |> String.join ", "
+                    )
+                , class "diagram-triangle"
+                , id <| "triangle" ++ (toString n)
+                ]
+                []
+
+        coordinates =
+            List.indexedMap
+                (\n v ->
+                    plotFromPolar
+                        ( toFloat v.score
+                        , (2.0 * pi * toFloat n / (toFloat <| List.length values))
+                        )
+                        ( centerX, centerY )
+                )
+                values
+
+        circledCoordinates =
+            coordinates
+                ++ [ Maybe.withDefault ( 0, 0 ) (List.head coordinates) ]
+
+        triangleVertexes =
+            zip circledCoordinates <|
+                Maybe.withDefault [] (List.tail circledCoordinates)
+    in
+        triangleVertexes
+            |> List.indexedMap
+                (\n ( p1, p2 ) -> drawTriangle n p1 ( centerX, centerY ) p2)
 
 
 plotBenchmarks : Size -> Indicator -> List Indicator -> Html.Html msg
@@ -139,4 +234,6 @@ plotBenchmarks size total results =
                         []
                    ]
                 ++ drawResult ( 0, 0 ) "totalScore" total
+                ++ drawAxes ( centerX, centerY ) numberOfResults
+                ++ drawTriangles ( centerX, centerY ) results
             )
