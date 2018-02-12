@@ -48,27 +48,7 @@ img {
 }
 
 .diagram-triangle {
-  opacity: 0.85;
-}
-
-#triangle0 {
-  fill: #4C6085;
-}
-
-#triangle1 {
-  fill: #fddf1f;
-}
-
-#triangle2 {
-  fill: #d33f8b;
-}
-
-#triangle3 {
-  fill: #3ba8af;
-}
-
-#triangle4 {
-  fill: #4C6085
+  opacity: 1;
 }
 
 .result-title {

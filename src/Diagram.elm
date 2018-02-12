@@ -1,8 +1,9 @@
 module Diagram exposing (plotBenchmarks, Size, Indicator)
 
-import Svg exposing (Svg, circle, svg, text_, text, line, polyline)
+import Svg exposing (Svg, circle, svg, text_, text, line, polyline, defs)
+import Svg exposing (linearGradient, stop)
 import Svg.Attributes exposing (cx, cy, x, y, r, viewBox, height, width, x1, x2)
-import Svg.Attributes exposing (y1, y2, points)
+import Svg.Attributes exposing (y1, y2, points, stopColor, fill, offset)
 import Svg.Attributes exposing (class, id, alignmentBaseline, textAnchor)
 import Html exposing (Html)
 
@@ -87,6 +88,7 @@ drawTriangles ( centerX, centerY ) values =
                     )
                 , class "diagram-triangle"
                 , id <| "triangle" ++ (toString n)
+                , fill <| "url(#grad" ++ (toString n) ++ ")"
                 ]
                 []
 
@@ -141,29 +143,10 @@ plotBenchmarks size total results =
                 ( round x + centerX, round y + centerY )
 
         drawCircle n res =
-            let
-                ( x, y ) =
-                    plotFromPolar
-                        ( 30
-                        , 2.0 * pi * toFloat n / toFloat numberOfResults
-                        )
-            in
-                [ circle
-                    [ cx (toString x)
-                    , cy (toString y)
-                    , r "80"
-                    , id <| "circle" ++ (toString n)
-                    , class "diagram-circle"
-                    ]
-                    []
-                ]
-                    ++ (drawResult
-                            ( 165
-                            , 2.0 * pi * toFloat n / toFloat numberOfResults
-                            )
-                            (toString n)
-                            res
-                       )
+            drawResult
+                ( 165, 2.0 * pi * toFloat n / toFloat numberOfResults )
+                (toString n)
+                res
 
         drawResult ( r, theta ) scoreId res =
             let
@@ -215,6 +198,21 @@ plotBenchmarks size total results =
                     ]
                     [ text diffText ]
                 ]
+
+        gradients =
+            [ linearGradient [ id "grad0", x1 "0", x2 "0", y1 "0", y2 "1" ]
+                [ stop [ offset "0%", stopColor "#9c66d0" ] []
+                , stop [ offset "100%", stopColor "#ec5b70" ] []
+                ]
+            , linearGradient [ id "grad1", x1 "0", x2 "0", y1 "0", y2 "1" ]
+                [ stop [ offset "0%", stopColor "#aa1c78" ] []
+                , stop [ offset "100%", stopColor "#e31636" ] []
+                ]
+            , linearGradient [ id "grad2", x1 "0", x2 "0", y1 "0", y2 "1" ]
+                [ stop [ offset "0%", stopColor "#8c42be" ] []
+                , stop [ offset "100%", stopColor "#e53753" ] []
+                ]
+            ]
     in
         svg
             [ viewBox <|
@@ -223,7 +221,9 @@ plotBenchmarks size total results =
                     ++ " "
                     ++ toString size.height
             ]
-            ((List.concat <| List.indexedMap drawCircle results)
+        <|
+            [ defs [] gradients ]
+                ++ (List.concat <| List.indexedMap drawCircle results)
                 ++ [ circle
                         [ cx (toString centerX)
                         , cy (toString centerY)
@@ -236,4 +236,3 @@ plotBenchmarks size total results =
                 ++ drawResult ( 0, 0 ) "totalScore" total
                 ++ drawAxes ( centerX, centerY ) numberOfResults
                 ++ drawTriangles ( centerX, centerY ) results
-            )
