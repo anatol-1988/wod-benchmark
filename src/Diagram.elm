@@ -1,10 +1,11 @@
 module Diagram exposing (plotBenchmarks, Size, Indicator)
 
 import Svg exposing (Svg, circle, svg, text_, text, line, polyline, defs)
-import Svg exposing (linearGradient, stop)
+import Svg exposing (linearGradient, stop, g, filter)
 import Svg.Attributes exposing (cx, cy, x, y, r, viewBox, height, width, x1, x2)
 import Svg.Attributes exposing (y1, y2, points, stopColor, fill, offset)
 import Svg.Attributes exposing (class, id, alignmentBaseline, textAnchor)
+import Svg.Attributes exposing (stdDeviation, dx, dy, style, floodOpacity)
 import Html exposing (Html)
 
 
@@ -75,7 +76,7 @@ zip =
     List.map2 (,)
 
 
-drawTriangles : Cartesian -> List { a | score : Int } -> List (Svg msg)
+drawTriangles : Cartesian -> List { a | score : Int } -> Svg msg
 drawTriangles ( centerX, centerY ) values =
     let
         drawTriangle n p1 p2 p3 =
@@ -111,9 +112,16 @@ drawTriangles ( centerX, centerY ) values =
             zip circledCoordinates <|
                 Maybe.withDefault [] (List.tail circledCoordinates)
     in
-        triangleVertexes
-            |> List.indexedMap
-                (\n ( p1, p2 ) -> drawTriangle n p1 ( centerX, centerY ) p2)
+        g [ style "filter:url(#shadow);" ]
+            (triangleVertexes
+                |> List.indexedMap
+                    (\n ( p1, p2 ) -> drawTriangle n p1 ( centerX, centerY ) p2)
+            )
+
+
+feDropShadow : List (Svg.Attribute msg) -> List (Svg msg) -> Svg msg
+feDropShadow =
+    Svg.node "feDropShadow"
 
 
 plotBenchmarks : Size -> Indicator -> List Indicator -> Html.Html msg
@@ -212,6 +220,15 @@ plotBenchmarks size total results =
                 [ stop [ offset "0%", stopColor "#8c42be" ] []
                 , stop [ offset "100%", stopColor "#e53753" ] []
                 ]
+            , filter [ id "shadow" ]
+                [ feDropShadow
+                    [ dx "2"
+                    , dy "2"
+                    , stdDeviation "7"
+                    , floodOpacity "0.4"
+                    ]
+                    []
+                ]
             ]
     in
         svg
@@ -224,15 +241,6 @@ plotBenchmarks size total results =
         <|
             [ defs [] gradients ]
                 ++ (List.concat <| List.indexedMap drawCircle results)
-                ++ [ circle
-                        [ cx (toString centerX)
-                        , cy (toString centerY)
-                        , r "60"
-                        , id "central"
-                        , class "diagram-circle"
-                        ]
-                        []
-                   ]
                 ++ drawResult ( 100, pi ) "totalScore" total
                 ++ drawAxes ( centerX, centerY ) numberOfResults
-                ++ drawTriangles ( centerX, centerY ) results
+                ++ [ drawTriangles ( centerX, centerY ) results ]
