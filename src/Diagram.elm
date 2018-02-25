@@ -233,6 +233,6 @@ plotBenchmarks size total results =
                         ]
                         []
                    ]
-                ++ drawResult ( 0, 0 ) "totalScore" total
+                ++ drawResult ( 100, pi ) "totalScore" total
                 ++ drawAxes ( centerX, centerY ) numberOfResults
                 ++ drawTriangles ( centerX, centerY ) results
