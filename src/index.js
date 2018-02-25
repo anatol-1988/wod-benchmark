@@ -37,6 +37,24 @@ firebase.auth().onAuthStateChanged((user) => {
                 if (wods)
                     myapp.ports.getWods.send(wods);
             });
+
+        firebase.database().ref('users/' + user.uid + '/gender/').once('value')
+            .then(function (snapshot) {
+                var gender = snapshot.val();
+
+                if (gender) {
+                    myapp.ports.onGenderChanged.send(gender);
+                }
+            });
+
+        firebase.database().ref('users/' + user.uid + '/units/').once('value')
+            .then(function (snapshot) {
+                var units = snapshot.val();
+
+                if (units) {
+                    myapp.ports.onUnitsChanged.send(units);
+                }
+            });
     }
 });
 
@@ -61,6 +79,14 @@ firebase.auth()
 myapp.ports.saveWods.subscribe(function ([uuid, wods]) {
     firebase.database().ref('users/' + uuid + '/results/').set(wods);
     Materialize.toast('Results saved', 4000);
+});
+
+myapp.ports.saveGender.subscribe(function ([uuid, gender]) {
+    firebase.database().ref('users/' + uuid + '/gender/').set(gender);
+});
+
+myapp.ports.saveUnits.subscribe(function ([uuid, units]) {
+    firebase.database().ref('users/' + uuid + '/units/').set(units);
 });
 
 myapp.ports.signIn.subscribe(function () {

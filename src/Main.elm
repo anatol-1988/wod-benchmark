@@ -11,7 +11,7 @@ import Json.Decode as Decode exposing (Value)
 import List
 import String exposing (toInt)
 import Result
-import Wods exposing (Wod, WodType(..), normalize, WodId, kg, lb)
+import Wods exposing (Wod, WodType(..), normalize, WodId, kg, lb, unitToString)
 import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
 import Profile exposing (Profile, AuthorizationState(..), Gender(..), Units(..))
@@ -176,7 +176,7 @@ getSerializedResult wod =
                     Maybe.map toString range.value
 
                 PRInfo range ->
-                    Maybe.map toString range.value
+                    Maybe.map unitToString range.value
     in
         Maybe.map (\v -> ( wod.id, v )) val
 
@@ -302,7 +302,14 @@ update msg model =
                 | gender = gender
                 , indicators = updateIndicators model.wods gender
             }
-                ! []
+                ! [ case model.profile of
+                        Authorized profile ->
+                            ( profile.userUid, toString gender )
+                                |> Ports.saveGender
+
+                        NotAuthorized ->
+                            Cmd.none
+                  ]
 
         OnChangeUnits units ->
             let
@@ -314,7 +321,14 @@ update msg model =
                     , units = units
                     , indicators = updateIndicators updatedWods model.gender
                 }
-                    ! []
+                    ! [ case model.profile of
+                            Authorized profile ->
+                                ( profile.userUid, toString units )
+                                    |> Ports.saveUnits
+
+                            NotAuthorized ->
+                                Cmd.none
+                      ]
 
         none ->
             model ! []
@@ -354,8 +368,10 @@ renderInput value wod gender units =
                     [ Html.input
                         [ type_ "number"
                         , Html.Attributes.id wod.id
-                        , Html.Attributes.min <| toString (genderLimits range gender).worst
-                        , Html.Attributes.max <| toString (genderLimits range gender).best
+                        , Html.Attributes.min <|
+                            toString (genderLimits range gender).worst
+                        , Html.Attributes.max <|
+                            toString (genderLimits range gender).best
                         , onInput (OnChangeValue wod.id)
                         , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
@@ -366,8 +382,10 @@ renderInput value wod gender units =
                     [ Html.input
                         [ type_ "number"
                         , Html.Attributes.id wod.id
-                        , Html.Attributes.min <| toString (genderLimits range gender).worst
-                        , Html.Attributes.max <| toString (genderLimits range gender).best
+                        , Html.Attributes.min <|
+                            toString (genderLimits range gender).worst
+                        , Html.Attributes.max <|
+                            toString (genderLimits range gender).best
                         , onInput (OnChangeValue wod.id)
                         , Maybe.withDefault "" value |> Html.Attributes.value
                         ]
@@ -613,19 +631,12 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Ports.getWods GetWods
-        , Sub.map SignedIn sessionChange
-        , Sub.map OnChangeGender genderChange
+        , Sub.map SignedIn <|
+            Ports.onSignedIn
+                (Decode.decodeValue Profile.decodeProfile >> Result.toMaybe)
+        , Sub.map OnChangeUnits <| Ports.onUnitsChanged Profile.stringToUnits
+        , Sub.map OnChangeGender <| Ports.onGenderChanged Profile.stringToGender
         ]
-
-
-sessionChange : Sub (Maybe Profile)
-sessionChange =
-    Ports.onSignedIn (Decode.decodeValue Profile.decode >> Result.toMaybe)
-
-
-genderChange : Sub Gender
-genderChange =
-    Ports.onGenderChanged Profile.stringToGender
 
 
 main : Program Never Model Msg

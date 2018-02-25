@@ -4,8 +4,9 @@ module Profile
         , AuthorizationState(..)
         , Gender(..)
         , Units(..)
-        , decode
+        , decodeProfile
         , stringToGender
+        , stringToUnits
         )
 
 import Json.Decode as Decode exposing (Decoder)
@@ -30,16 +31,20 @@ type Gender
     | Male
     | Female
 
-type Units = UndefiniteUnits | Imperial | Metric
+
+type Units
+    = UndefiniteUnits
+    | Imperial
+    | Metric
 
 
 stringToGender : String -> Gender
 stringToGender str =
     case str of
-        "male" ->
+        "Male" ->
             Male
 
-        "female" ->
+        "Female" ->
             Female
 
         _ ->
@@ -51,8 +56,26 @@ decodeGender =
     Decode.string |> Decode.andThen (Decode.succeed << stringToGender)
 
 
-decode : Decoder Profile
-decode =
+stringToUnits : String -> Units
+stringToUnits str =
+    case str of
+        "Imperial" ->
+            Imperial
+
+        "Metric" ->
+            Metric
+
+        _ ->
+            UndefiniteUnits
+
+
+decodeUnits : Decoder Units
+decodeUnits =
+    Decode.string |> Decode.andThen (Decode.succeed << stringToUnits)
+
+
+decodeProfile : Decoder Profile
+decodeProfile =
     Pipeline.decode Profile
         |> required "displayName" (Decode.nullable Decode.string)
         |> required "profilePic" (Decode.nullable Decode.string)

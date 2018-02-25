@@ -13,12 +13,15 @@ module Wods
         , getEndurance
         , getTotal
         , normalize
+        , unitToString
         , WodId
         )
 
 import List exposing (foldl)
 import Time exposing (Time, second, minute)
 import Arithmetic exposing (cubeRoot)
+import String exposing (toInt)
+import Maybe exposing (map)
 
 
 type alias Limits a =
@@ -38,11 +41,26 @@ type WeightUnit
     = Pound Int
     | Kilogram Int
 
+
+unitToString : WeightUnit -> String
+unitToString unit =
+    case unit of
+        Pound val ->
+            toString val
+
+        Kilogram val ->
+            toString val
+
+
 kg : Int -> WeightUnit
-kg n = Kilogram n
+kg n =
+    Kilogram n
+
 
 lb : Int -> WeightUnit
-lb n = Pound n
+lb n =
+    Pound n
+
 
 poundsToKilograms : Int -> Int
 poundsToKilograms pounds =
