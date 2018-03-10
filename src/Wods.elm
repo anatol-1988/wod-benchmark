@@ -321,11 +321,11 @@ getEndurance wods gender =
     getFactor .endurance gender wods
 
 
-getTotal : List (Maybe Int) -> Gender -> Maybe Int
-getTotal factors gender =
+getTotal : List (Maybe Int) -> Maybe Int
+getTotal factors =
     foldl (\x y -> Maybe.map2 (*) x y) (Just 1) factors
         |> Maybe.map toFloat
-        |> Maybe.map cubeRoot
+        |> Maybe.map (flip (^) (1 / (List.length factors |> toFloat)))
         |> Maybe.map round
 
 
@@ -412,5 +412,5 @@ updateIndicators wods gender =
         { cardio = cardio
         , endurance = endurance
         , power = power
-        , total = getTotal [ cardio, endurance, power ] gender
+        , total = getTotal [ cardio, endurance, power ]
         }
