@@ -24,12 +24,14 @@ import Time exposing (Time, second, minute)
 import Arithmetic exposing (cubeRoot)
 import Maybe exposing (map)
 
+
 type alias Indicators =
     { cardio : Maybe Int
     , endurance : Maybe Int
     , power : Maybe Int
     , total : Maybe Int
     }
+
 
 type alias Limits a =
     { worst : a
@@ -319,16 +321,12 @@ getEndurance wods gender =
     getFactor .endurance gender wods
 
 
-getTotal : List Wod -> Gender -> Maybe Int
-getTotal wods gender =
-    let
-        getRoot cardio power endurance =
-            round <| cubeRoot (toFloat <| cardio * power * endurance)
-    in
-        Maybe.map3 getRoot
-            (getCardio wods gender)
-            (getPower wods gender)
-            (getEndurance wods gender)
+getTotal : List (Maybe Int) -> Gender -> Maybe Int
+getTotal factors gender =
+    foldl (\x y -> Maybe.map2 (*) x y) (Just 1) factors
+        |> Maybe.map toFloat
+        |> Maybe.map cubeRoot
+        |> Maybe.map round
 
 
 normalize : WodType -> Gender -> Maybe Int
@@ -398,10 +396,21 @@ getFactor factor gender wods =
         else
             Nothing
 
+
 updateIndicators : List Wod -> Gender -> Indicators
 updateIndicators wods gender =
-    { cardio = getCardio wods gender
-    , endurance = getEndurance wods gender
-    , power = getPower wods gender
-    , total = getTotal wods gender
-    }
+    let
+        cardio =
+            getCardio wods gender
+
+        endurance =
+            getEndurance wods gender
+
+        power =
+            getPower wods gender
+    in
+        { cardio = cardio
+        , endurance = endurance
+        , power = power
+        , total = getTotal [ cardio, endurance, power ] gender
+        }
