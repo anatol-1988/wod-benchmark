@@ -306,19 +306,19 @@ wods =
     ]
 
 
-getCardio : WodValues -> List Wod -> Gender -> Units -> Maybe Int
-getCardio values wods gender units =
-    getFactor .cardio values wods gender units
+getCardio : WodValues -> Gender -> Units -> Maybe Int
+getCardio values gender units =
+    getFactor .cardio values gender units
 
 
-getPower : WodValues -> List Wod -> Gender -> Units -> Maybe Int
-getPower values wods gender units =
-    getFactor .power values wods gender units
+getPower : WodValues -> Gender -> Units -> Maybe Int
+getPower values gender units =
+    getFactor .power values gender units
 
 
-getEndurance : WodValues -> List Wod -> Gender -> Units -> Maybe Int
-getEndurance values wods gender units =
-    getFactor .endurance values wods gender units
+getEndurance : WodValues -> Gender -> Units -> Maybe Int
+getEndurance values gender units =
+    getFactor .endurance values gender units
 
 
 getTotal : List (Maybe Int) -> Maybe Int
@@ -409,8 +409,8 @@ normalize wod gender units value =
         Maybe.map (\x -> round <| 100.0 * (clamp 0.0 1.0 x)) ratio
 
 
-getFactor : (Wod -> Float) -> WodValues -> List Wod -> Gender -> Units -> Maybe Int
-getFactor factor values wods gender units =
+getFactor : (Wod -> Float) -> WodValues -> Gender -> Units -> Maybe Int
+getFactor factor values gender units =
     let
         addWeightedValue w sum =
             sum
@@ -441,17 +441,17 @@ getFactor factor values wods gender units =
             Nothing
 
 
-updateIndicators : WodValues -> List Wod -> Gender -> Units -> Indicators
-updateIndicators values wods gender units =
+updateIndicators : WodValues -> Gender -> Units -> Indicators
+updateIndicators values gender units =
     let
         cardio =
-            getCardio values wods gender units
+            getCardio values gender units
 
         endurance =
-            getEndurance values wods gender units
+            getEndurance values gender units
 
         power =
-            getPower values wods gender units
+            getPower values gender units
     in
         { cardio = cardio
         , endurance = endurance

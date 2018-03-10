@@ -46,8 +46,7 @@ timeToString time =
 
 
 type alias Model =
-    { wods : List Wod
-    , values : Dict String String
+    { values : Dict String String
     , indicators : Indicators
     , indicators_ : Indicators
     , profile : AuthorizationState
@@ -58,8 +57,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { wods = Wods.wods
-      , values = Dict.empty
+    ( { values = Dict.empty
       , indicators =
             { cardio = Nothing
             , endurance = Nothing
@@ -174,7 +172,6 @@ update msg model =
                 | indicators_ = model.indicators
                 , indicators =
                     Wods.updateIndicators model.values
-                        model.wods
                         (wodGender model.gender)
                         (wodUnits model.units)
             }
@@ -198,7 +195,6 @@ update msg model =
                     | values = savedWods
                     , indicators =
                         Wods.updateIndicators model.values
-                            model.wods
                             (wodGender model.gender)
                             (wodUnits model.units)
                 }
@@ -222,7 +218,6 @@ update msg model =
                 | gender = gender
                 , indicators =
                     Wods.updateIndicators model.values
-                        model.wods
                         (wodGender gender)
                         (wodUnits model.units)
             }
@@ -240,7 +235,6 @@ update msg model =
                 | units = units
                 , indicators =
                     Wods.updateIndicators model.values
-                        model.wods
                         (wodGender model.gender)
                         (wodUnits model.units)
             }
@@ -348,7 +342,7 @@ renderInput value wod gender units =
 
 renderInputs : Model -> List (Html Msg)
 renderInputs model =
-    model.wods
+    Wods.wods
         |> List.map
             (\w ->
                 div [ Html.Attributes.class "row" ]
