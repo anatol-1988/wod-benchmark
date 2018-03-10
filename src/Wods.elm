@@ -15,14 +15,21 @@ module Wods
         , normalize
         , unitToString
         , WodId
+        , Indicators
+        , updateIndicators
         )
 
 import List exposing (foldl)
 import Time exposing (Time, second, minute)
 import Arithmetic exposing (cubeRoot)
-import String exposing (toInt)
 import Maybe exposing (map)
 
+type alias Indicators =
+    { cardio : Maybe Int
+    , endurance : Maybe Int
+    , power : Maybe Int
+    , total : Maybe Int
+    }
 
 type alias Limits a =
     { worst : a
@@ -390,3 +397,11 @@ getFactor factor gender wods =
             Just <| round (weightedSum / sumOfWeights)
         else
             Nothing
+
+updateIndicators : List Wod -> Gender -> Indicators
+updateIndicators wods gender =
+    { cardio = getCardio wods gender
+    , endurance = getEndurance wods gender
+    , power = getPower wods gender
+    , total = getTotal wods gender
+    }

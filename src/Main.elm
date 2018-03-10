@@ -12,6 +12,7 @@ import List
 import String exposing (toInt)
 import Result
 import Wods exposing (Wod, WodType(..), normalize, WodId, kg, lb, unitToString)
+import Wods exposing (Indicators)
 import Time exposing (Time, minute, second)
 import Diagram exposing (plotBenchmarks, Indicator)
 import Profile exposing (Profile, AuthorizationState(..), Gender(..), Units(..))
@@ -63,14 +64,6 @@ timeToString time =
 
 
 ---- MODEL ----
-
-
-type alias Indicators =
-    { cardio : Maybe Int
-    , endurance : Maybe Int
-    , power : Maybe Int
-    , total : Maybe Int
-    }
 
 
 type alias Model =
@@ -206,15 +199,6 @@ wodGender profile =
             Wods.Male
 
 
-updateIndicators : List Wod -> Gender -> Indicators
-updateIndicators wods gender =
-    { cardio = Wods.getCardio wods <| wodGender gender
-    , endurance = Wods.getEndurance wods <| wodGender gender
-    , power = Wods.getPower wods <| wodGender gender
-    , total = Wods.getTotal wods <| wodGender gender
-    }
-
-
 maskTime : String -> String
 maskTime time =
     String.filter
@@ -234,6 +218,19 @@ maskTime time =
                 ]
         )
         time
+
+
+onEnter : msg -> Html.Attribute msg
+onEnter msg =
+    Html.Events.keyCode
+        |> Decode.andThen
+            (\key ->
+                if key == 13 then
+                    Decode.succeed msg
+                else
+                    Decode.fail "Not enter"
+            )
+        |> Html.Events.on "keyup"
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -257,7 +254,9 @@ update msg model =
                 { model
                     | wods = updatedWods
                     , indicators_ = model.indicators
-                    , indicators = updateIndicators updatedWods model.gender
+                    , indicators =
+                        Wods.updateIndicators updatedWods <|
+                            wodGender model.gender
                 }
                     ! [ case model.profile of
                             Authorized profile ->
@@ -280,7 +279,9 @@ update msg model =
             in
                 { model
                     | values = savedWods
-                    , indicators = updateIndicators updatedWods model.gender
+                    , indicators =
+                        Wods.updateIndicators updatedWods <|
+                            wodGender model.gender
                 }
                     ! [ Ports.updateInputFields () ]
 
@@ -300,7 +301,9 @@ update msg model =
         OnChangeGender gender ->
             { model
                 | gender = gender
-                , indicators = updateIndicators model.wods gender
+                , indicators =
+                    Wods.updateIndicators model.wods <|
+                        wodGender gender
             }
                 ! [ case model.profile of
                         Authorized profile ->
@@ -319,7 +322,9 @@ update msg model =
                 { model
                     | wods = updatedWods
                     , units = units
-                    , indicators = updateIndicators updatedWods model.gender
+                    , indicators =
+                        Wods.updateIndicators updatedWods <|
+                            wodGender model.gender
                 }
                     ! [ case model.profile of
                             Authorized profile ->
@@ -440,7 +445,7 @@ renderInputs model =
 view : Model -> Html Msg
 view model =
     div [ class "row" ]
-        [ div [ class "col s12 m3" ] <|
+        [ div [ class "col s12 m3", onEnter CalcAll ] <|
             [ h3 [] [ text "Calculated on previous benchmarks" ]
             , button
                 [ class "waves-effect waves-light btn-large"
