@@ -3,6 +3,7 @@ module Wods
         ( Wod
         , WodType(..)
         , Gender(Male, Female)
+        , Units(Imperial, Metric)
         , kg
         , lb
         , Range
@@ -20,8 +21,8 @@ module Wods
         )
 
 import List exposing (foldl)
+import Dict exposing (Dict)
 import Time exposing (Time, second, minute)
-import Arithmetic exposing (cubeRoot)
 import Maybe exposing (map)
 
 
@@ -33,6 +34,10 @@ type alias Indicators =
     }
 
 
+type alias WodValues =
+    Dict String String
+
+
 type alias Limits a =
     { worst : a
     , best : a
@@ -42,8 +47,12 @@ type alias Limits a =
 type alias Range a =
     { man : Limits a
     , woman : Limits a
-    , value : Maybe a
     }
+
+
+type Units
+    = Imperial
+    | Metric
 
 
 type WeightUnit
@@ -192,7 +201,6 @@ wods =
                     { worst = 6 * minute
                     , best = 2 * minute + 30 * second
                     }
-                , value = Nothing
                 }
       }
     , { id = "mrh"
@@ -210,7 +218,6 @@ wods =
                     { worst = 70 * minute
                     , best = 40 * minute
                     }
-                , value = Nothing
                 }
       }
     , { id = "sq"
@@ -222,7 +229,6 @@ wods =
             PRInfo
                 { man = { worst = kg 40, best = kg 215 }
                 , woman = { worst = kg 30, best = kg 205 }
-                , value = Nothing
                 }
       }
     , { id = "clj"
@@ -234,7 +240,6 @@ wods =
             PRInfo
                 { man = { worst = kg 20, best = kg 170 }
                 , woman = { worst = kg 10, best = kg 160 }
-                , value = Nothing
                 }
       }
     , { id = "sntch"
@@ -246,7 +251,6 @@ wods =
             PRInfo
                 { man = { worst = kg 15, best = kg 140 }
                 , woman = { worst = kg 5, best = kg 120 }
-                , value = Nothing
                 }
       }
     , { id = "dlft"
@@ -258,7 +262,6 @@ wods =
             PRInfo
                 { man = { worst = kg 60, best = kg 260 }
                 , woman = { worst = kg 50, best = kg 240 }
-                , value = Nothing
                 }
       }
     , { id = "fgb"
@@ -270,7 +273,6 @@ wods =
             ForReps
                 { man = { worst = 200, best = 508 }
                 , woman = { worst = 190, best = 490 }
-                , value = Nothing
                 }
       }
     , { id = "plps"
@@ -282,7 +284,6 @@ wods =
             ForReps
                 { man = { worst = 5, best = 75 }
                 , woman = { worst = 2, best = 65 }
-                , value = Nothing
                 }
       }
     , { id = "grc"
@@ -300,25 +301,24 @@ wods =
                     { worst = 7 * minute
                     , best = 2 * minute + 11 * second
                     }
-                , value = Nothing
                 }
       }
     ]
 
 
-getCardio : List Wod -> Gender -> Maybe Int
-getCardio wods gender =
-    getFactor .cardio gender wods
+getCardio : WodValues -> List Wod -> Gender -> Units -> Maybe Int
+getCardio values wods gender units =
+    getFactor .cardio values wods gender units
 
 
-getPower : List Wod -> Gender -> Maybe Int
-getPower wods gender =
-    getFactor .power gender wods
+getPower : WodValues -> List Wod -> Gender -> Units -> Maybe Int
+getPower values wods gender units =
+    getFactor .power values wods gender units
 
 
-getEndurance : List Wod -> Gender -> Maybe Int
-getEndurance wods gender =
-    getFactor .endurance gender wods
+getEndurance : WodValues -> List Wod -> Gender -> Units -> Maybe Int
+getEndurance values wods gender units =
+    getFactor .endurance values wods gender units
 
 
 getTotal : List (Maybe Int) -> Maybe Int
@@ -329,8 +329,29 @@ getTotal factors =
         |> Maybe.map round
 
 
-normalize : WodType -> Gender -> Maybe Int
-normalize wod gender =
+parseTime : String -> Maybe Time
+parseTime str =
+    let
+        parts =
+            String.split ":" str
+    in
+        case parts of
+            m :: s :: _ ->
+                Just <|
+                    (Result.withDefault 0 <| String.toFloat m)
+                        * minute
+                        + (Result.withDefault 0 <| String.toFloat s)
+                        * second
+
+            s :: _ ->
+                Result.toMaybe <| Result.map ((*) second) (String.toFloat s)
+
+            _ ->
+                Nothing
+
+
+normalize : WodType -> Gender -> Units -> String -> Maybe Int
+normalize wod gender units value =
     let
         genderLimits range =
             case gender of
@@ -344,46 +365,69 @@ normalize wod gender =
             case wod of
                 ForTime range ->
                     Maybe.map
-                        (\x -> (x - (genderLimits range).worst) / ((genderLimits range).best - (genderLimits range).worst))
-                        range.value
+                        (\x ->
+                            (x - (genderLimits range).worst)
+                                / ((genderLimits range).best
+                                    - (genderLimits range).worst
+                                  )
+                        )
+                    <|
+                        parseTime value
 
                 PRInfo range ->
                     Maybe.map
                         (\x ->
-                            divide (sub x (genderLimits range).worst) (sub (genderLimits range).best (genderLimits range).worst)
+                            divide (sub x (genderLimits range).worst)
+                                (sub (genderLimits range).best
+                                    (genderLimits range).worst
+                                )
                         )
-                        range.value
+                        (Maybe.map
+                            (case units of
+                                Imperial ->
+                                    lb
+
+                                Metric ->
+                                    kg
+                            )
+                         <|
+                            Result.toMaybe <|
+                                String.toInt value
+                        )
 
                 ForReps range ->
                     Maybe.map
                         (\x ->
                             (toFloat <| x - (genderLimits range).worst)
-                                / (toFloat <| (genderLimits range).best - (genderLimits range).worst)
+                                / (toFloat <|
+                                    (genderLimits range).best
+                                        - (genderLimits range).worst
+                                  )
                         )
-                        range.value
+                        (Result.toMaybe <| String.toInt value)
     in
         Maybe.map (\x -> round <| 100.0 * (clamp 0.0 1.0 x)) ratio
 
 
-getFactor : (Wod -> Float) -> Gender -> List Wod -> Maybe Int
-getFactor factor gender wods =
+getFactor : (Wod -> Float) -> WodValues -> List Wod -> Gender -> Units -> Maybe Int
+getFactor factor values wods gender units =
     let
+        addWeightedValue w sum =
+            sum
+                + (toFloat <| Maybe.withDefault 0 <| normalizeValue w)
+                * (factor w)
+
+        normalizeValue wod =
+            (Dict.get wod.id values)
+                |> Maybe.andThen (normalize wod.range gender units)
+
         weightedSum =
-            let
-                addWeightedValue w sum =
-                    sum
-                        + (toFloat <|
-                            Maybe.withDefault 0 <|
-                                normalize w.range gender
-                          )
-                        * (factor w)
-            in
-                foldl addWeightedValue 0 wods
+            foldl addWeightedValue 0 wods
 
         sumOfWeights =
             foldl
                 (\w sum ->
-                    if (normalize w.range gender) /= Nothing then
+                    if (normalizeValue w) /= Nothing then
                         sum + factor w
                     else
                         sum
@@ -397,17 +441,17 @@ getFactor factor gender wods =
             Nothing
 
 
-updateIndicators : List Wod -> Gender -> Indicators
-updateIndicators wods gender =
+updateIndicators : WodValues -> List Wod -> Gender -> Units -> Indicators
+updateIndicators values wods gender units =
     let
         cardio =
-            getCardio wods gender
+            getCardio values wods gender units
 
         endurance =
-            getEndurance wods gender
+            getEndurance values wods gender units
 
         power =
-            getPower wods gender
+            getPower values wods gender units
     in
         { cardio = cardio
         , endurance = endurance

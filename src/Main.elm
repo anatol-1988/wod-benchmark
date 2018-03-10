@@ -21,27 +21,6 @@ import Ports
 import Dict exposing (Dict, empty)
 
 
-parseTime : String -> Maybe Time
-parseTime str =
-    let
-        parts =
-            String.split ":" str
-    in
-        case parts of
-            m :: s :: _ ->
-                Just <|
-                    (Result.withDefault 0 <| String.toFloat m)
-                        * minute
-                        + (Result.withDefault 0 <| String.toFloat s)
-                        * second
-
-            s :: _ ->
-                Result.toMaybe <| Result.map ((*) second) (String.toFloat s)
-
-            _ ->
-                Nothing
-
-
 timeToString : Time -> String
 timeToString time =
     let
@@ -117,75 +96,6 @@ type Msg
     | SignedIn (Maybe Profile)
 
 
-setWodValue : String -> String -> Units -> Wod -> Wod
-setWodValue id value units wod =
-    { wod
-        | range =
-            if wod.id == id then
-                case wod.range of
-                    ForTime range ->
-                        ForTime { range | value = parseTime value }
-
-                    ForReps range ->
-                        ForReps
-                            { range
-                                | value =
-                                    Result.toMaybe <| toInt value
-                            }
-
-                    PRInfo range ->
-                        PRInfo
-                            { range
-                                | value =
-                                    Maybe.map
-                                        (case units of
-                                            UndefiniteUnits ->
-                                                lb
-
-                                            Imperial ->
-                                                lb
-
-                                            Metric ->
-                                                kg
-                                        )
-                                    <|
-                                        Result.toMaybe <|
-                                            toInt value
-                            }
-            else
-                wod.range
-    }
-
-
-getSerializedResult : Wod -> Maybe ( String, String )
-getSerializedResult wod =
-    let
-        val =
-            case wod.range of
-                ForTime range ->
-                    Maybe.map timeToString range.value
-
-                ForReps range ->
-                    Maybe.map toString range.value
-
-                PRInfo range ->
-                    Maybe.map unitToString range.value
-    in
-        Maybe.map (\v -> ( wod.id, v )) val
-
-
-updateWods : Dict WodId String -> List Wod -> Units -> List Wod
-updateWods values wods units =
-    List.map
-        (\w ->
-            setWodValue w.id
-                (Maybe.withDefault "" <| Dict.get w.id values)
-                units
-                w
-        )
-        wods
-
-
 wodGender : Profile.Gender -> Wods.Gender
 wodGender profile =
     case profile of
@@ -197,6 +107,19 @@ wodGender profile =
 
         Undefinite ->
             Wods.Male
+
+
+wodUnits : Profile.Units -> Wods.Units
+wodUnits units =
+    case units of
+        UndefiniteUnits ->
+            Wods.Imperial
+
+        Metric ->
+            Wods.Metric
+
+        Imperial ->
+            Wods.Imperial
 
 
 maskTime : String -> String
@@ -247,41 +170,37 @@ update msg model =
                 ! []
 
         CalcAll ->
-            let
-                updatedWods =
-                    updateWods model.values model.wods model.units
-            in
-                { model
-                    | wods = updatedWods
-                    , indicators_ = model.indicators
-                    , indicators =
-                        Wods.updateIndicators updatedWods <|
-                            wodGender model.gender
-                }
-                    ! [ case model.profile of
-                            Authorized profile ->
-                                ( profile.userUid
-                                , List.filterMap getSerializedResult updatedWods
-                                )
-                                    |> Ports.saveWods
+            { model
+                | indicators_ = model.indicators
+                , indicators =
+                    Wods.updateIndicators model.values
+                        model.wods
+                        (wodGender model.gender)
+                        (wodUnits model.units)
+            }
+                ! [ case model.profile of
+                        Authorized profile ->
+                            ( profile.userUid
+                            , Dict.toList model.values
+                            )
+                                |> Ports.saveWods
 
-                            NotAuthorized ->
-                                Cmd.none
-                      ]
+                        NotAuthorized ->
+                            Cmd.none
+                  ]
 
         GetWods wods ->
             let
                 savedWods =
                     Dict.fromList wods
-
-                updatedWods =
-                    updateWods savedWods model.wods model.units
             in
                 { model
                     | values = savedWods
                     , indicators =
-                        Wods.updateIndicators updatedWods <|
-                            wodGender model.gender
+                        Wods.updateIndicators model.values
+                            model.wods
+                            (wodGender model.gender)
+                            (wodUnits model.units)
                 }
                     ! [ Ports.updateInputFields () ]
 
@@ -302,8 +221,10 @@ update msg model =
             { model
                 | gender = gender
                 , indicators =
-                    Wods.updateIndicators model.wods <|
-                        wodGender gender
+                    Wods.updateIndicators model.values
+                        model.wods
+                        (wodGender gender)
+                        (wodUnits model.units)
             }
                 ! [ case model.profile of
                         Authorized profile ->
@@ -315,25 +236,22 @@ update msg model =
                   ]
 
         OnChangeUnits units ->
-            let
-                updatedWods =
-                    updateWods model.values model.wods units
-            in
-                { model
-                    | wods = updatedWods
-                    , units = units
-                    , indicators =
-                        Wods.updateIndicators updatedWods <|
-                            wodGender model.gender
-                }
-                    ! [ case model.profile of
-                            Authorized profile ->
-                                ( profile.userUid, toString units )
-                                    |> Ports.saveUnits
+            { model
+                | units = units
+                , indicators =
+                    Wods.updateIndicators model.values
+                        model.wods
+                        (wodGender model.gender)
+                        (wodUnits model.units)
+            }
+                ! [ case model.profile of
+                        Authorized profile ->
+                            ( profile.userUid, toString units )
+                                |> Ports.saveUnits
 
-                            NotAuthorized ->
-                                Cmd.none
-                      ]
+                        NotAuthorized ->
+                            Cmd.none
+                  ]
 
         none ->
             model ! []
